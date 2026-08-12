@@ -8,7 +8,7 @@ class WeatherCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = weather.isDayTime ? Colors.white : Colors.white70;
+    // final textColor = weather.isDayTime ? Colors.white : Colors.white70;
 
     return Card(
       elevation: 16,
