@@ -12,7 +12,8 @@ class GetResponseDataSourceImpl extends GetResponseDataSource {
   GetResponseDataSourceImpl(this.dio);
   @override
   Future<AiResponse> getResponse(String imageFile) async {
-    const String apiEndpoint = "https://argitech-ts3a.onrender.com/api/scan";
+    const String apiEndpoint =
+        "https://argitech-production.up.railway.app/api/scan";
 
     FormData formData = FormData.fromMap({
       'leaf_image': await MultipartFile.fromFile(

@@ -4,8 +4,8 @@ class CropMarket extends Equatable {
   final String id;
   final String name;
   final String location;
-  final int? minPrice;
-  final int? maxPrice;
+  final String? minPrice;
+  final String? maxPrice;
 
   final String? currency;
 

@@ -1,7 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/widgets.dart';
-import 'package:plant_scanner_app/core/constant/api_constant.dart';
 import 'package:plant_scanner_app/core/error/failure.dart';
 import 'package:plant_scanner_app/core/network/api_service.dart';
 import 'package:plant_scanner_app/plant_scan/data/models/crop_market_model.dart';
@@ -20,13 +19,13 @@ class GetCropMarket extends GetCropMarketDatasource {
     try {
       final dio = Dio();
       final response = await dio.get(
-        'https://argitech-ts3a.onrender.com/api/crop-prices',
+        'https://argitech-production.up.railway.app/api/crop-prices',
         queryParameters: {"page": page},
       );
       debugPrint('Response: ${response.statusCode} ${response.data}');
       if (response.statusCode == 200 && response.data['success'] == true) {
         final List<dynamic> cropmarkets = response.data['data'];
-
+        debugPrint("Type of min and max respoo");
         final List<CropMarketModel> cropPrices = cropmarkets
             .map((crop) => CropMarketModel.fromJson(crop))
             .toList();

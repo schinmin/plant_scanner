@@ -1,50 +1,62 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
-import 'package:get_it/get_it.dart';
-import 'package:plant_scanner_app/core/network/api_service.dart';
-import 'package:plant_scanner_app/plant_scan/data/datasources/get_crop_market_datasource.dart';
-import 'package:plant_scanner_app/plant_scan/data/datasources/get_response_datasource.dart';
-import 'package:plant_scanner_app/plant_scan/data/repository_imp/get_crop_market_repol_impl.dart';
-import 'package:plant_scanner_app/plant_scan/data/repository_imp/get_disease_repol_impl.dart';
-import 'package:plant_scanner_app/plant_scan/domain/repository/crop_market_repository.dart';
-import 'package:plant_scanner_app/plant_scan/domain/repository/disease_repository.dart';
-import 'package:plant_scanner_app/plant_scan/domain/usecase/get_crop_market_usecase.dart';
-import 'package:plant_scanner_app/plant_scan/domain/usecase/get_disease_usecase.dart';
+import 'package:plant_scanner_app/auth/presentation/bloc/auth_bloc.dart';
+import 'package:plant_scanner_app/auth/presentation/screens/register_screen.dart';
+import 'package:plant_scanner_app/auth/presentation/screens/splash_screen.dart';
+import 'package:plant_scanner_app/core/di/injection.dart';
+
 import 'package:plant_scanner_app/plant_scan/presentation/crop_prices/crop_prices_bloc.dart';
+import 'package:plant_scanner_app/plant_scan/presentation/pages/main_home.dart';
 import 'package:plant_scanner_app/plant_scan/presentation/scan/bloc/getapiresponse_bloc.dart';
-import 'package:plant_scanner_app/plant_scan/presentation/pages/home.dart';
 
-final sl = GetIt.instance;
+import 'package:plant_scanner_app/plant_simulation/presentation/bloc/bloc/simulation_bloc.dart';
 
-void setup() {
-  sl.registerLazySingleton(() => Dio());
-  sl.registerLazySingleton<ApiService>(() => ApiService());
-  sl.registerLazySingleton<GetResponseDataSource>(
-    () => GetResponseDataSourceImpl(sl()),
-  );
-  sl.registerLazySingleton<DiseaseRepository>(() => GetDiseaseRepolImpl(sl()));
-  sl.registerLazySingleton(() => GetDiseaseRepolImpl(sl()));
-  sl.registerLazySingleton(() => GetDiseaseUseCase(sl()));
-  sl.registerFactory(() => GetapiresponseBloc(sl()));
+// final sl = GetIt.instance;
 
-  // Crop Market related registrations
-  sl.registerLazySingleton<GetCropMarketDatasource>(() => GetCropMarket(sl()));
-  sl.registerLazySingleton<CropMarketRepository>(
-    () => GetCropMarketRepolImpl(sl()),
-  );
-  sl.registerLazySingleton<GetCropMarketUseCase>(
-    () => GetCropMarketUseCase(sl()),
-  );
-  sl.registerFactory(() => CropPricesBloc(sl()));
-  FlutterNativeSplash.remove(); // Remove the splash screen after setup is complete
-}
+// void setup() {
+//   sl.registerLazySingleton(() => Dio());
+//   sl.registerLazySingleton<ApiService>(() => ApiService());
+//   sl.registerLazySingleton<GetResponseDataSource>(
+//     () => GetResponseDataSourceImpl(sl()),
+//   );
+//   sl.registerLazySingleton<DiseaseRepository>(() => GetDiseaseRepolImpl(sl()));
+//   sl.registerLazySingleton(() => GetDiseaseRepolImpl(sl()));
+//   sl.registerLazySingleton(() => GetDiseaseUseCase(sl()));
+//   sl.registerFactory(() => GetapiresponseBloc(sl()));
 
-void main() {
+//   // Crop Market related registrations
+//   sl.registerLazySingleton<GetCropMarketDatasource>(() => GetCropMarket(sl()));
+//   sl.registerLazySingleton<CropMarketRepository>(
+//     () => GetCropMarketRepolImpl(sl()),
+//   );
+//   sl.registerLazySingleton<GetCropMarketUseCase>(
+//     () => GetCropMarketUseCase(sl()),
+//   );
+//   sl.registerFactory(() => CropPricesBloc(sl()));
+
+//   // Simulation
+//   sl.registerLazySingleton<SimulationDatasources>(
+//     () => SimulationDataSourceImpl(sl()),
+//   );
+
+//   sl.registerLazySingleton(() => SimulationDataSourceImpl(sl()));
+
+//   sl.registerLazySingleton<SimulationRepository>(
+//     () => SimulationRepositoryImpl(sl()),
+//   );
+//   sl.registerLazySingleton<SimulationUsecase>(() => SimulationUsecase(sl()));
+
+//   sl.registerFactory<SimulationBloc>(() => SimulationBloc(sl()));
+
+//   //Auth
+//   FlutterNativeSplash.remove(); // Remove the splash screen after setup is complete
+// }
+
+void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
-  setup();
+  await initDependencies();
   runApp(const MyApp());
 }
 
@@ -53,20 +65,19 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Plant Scanner App',
-      theme: ThemeData(primarySwatch: Colors.green),
-      home: MultiBlocProvider(
-        providers: [
-          BlocProvider<GetapiresponseBloc>(
-            create: (context) => sl<GetapiresponseBloc>(),
-          ),
-          BlocProvider<CropPricesBloc>(
-            create: (context) => sl<CropPricesBloc>(),
-          ),
-        ],
-        child: const HomePage(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthBloc>(create: (context) => sl<AuthBloc>()),
+        BlocProvider<SimulationBloc>(create: (context) => sl<SimulationBloc>()),
+        BlocProvider<GetapiresponseBloc>(
+          create: (context) => sl<GetapiresponseBloc>(),
+        ),
+        BlocProvider<CropPricesBloc>(create: (context) => sl<CropPricesBloc>()),
+      ],
+      child: const MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Plant Scanner App',
+        home: SplashScreen(),
       ),
     );
   }
