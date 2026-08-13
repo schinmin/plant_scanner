@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:plant_scanner_app/plant_scan/presentation/pages/crop_market_screen.dart';
-import 'package:plant_scanner_app/plant_scan/presentation/pages/home.dart';
 import 'package:plant_scanner_app/plant_scan/presentation/pages/leaf_scanner.dart';
+import 'package:plant_scanner_app/plant_simulation/presentation/screens/my_simulations.dart';
 import 'package:plant_scanner_app/plant_simulation/presentation/screens/simulation_screen.dart';
 
 class MainHome extends StatefulWidget {
@@ -17,6 +17,7 @@ class _MainHomeState extends State<MainHome> {
 
   static const List<Widget> _widgetOptions = [
     SimulationScreen(),
+    MySimulationsScreen(),
     LeafScanner(),
     CropMarketScreen(),
   ];
@@ -64,6 +65,7 @@ class _MainHomeState extends State<MainHome> {
             color: Colors.black,
             tabs: [
               GButton(icon: Icons.home, text: "Home"),
+              GButton(icon: Icons.area_chart, text: "Simulations"),
               GButton(icon: Icons.scanner, text: "Leaf_Scan"),
               GButton(icon: Icons.price_change, text: "Crop-Prices"),
             ],

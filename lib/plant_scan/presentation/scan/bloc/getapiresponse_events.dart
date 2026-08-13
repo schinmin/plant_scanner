@@ -8,7 +8,8 @@ abstract class GetapiresponseEvent extends Equatable {
 }
 
 class PickAndScanEvent extends GetapiresponseEvent {
-  const PickAndScanEvent();
+  final String imagePath;
+  const PickAndScanEvent(this.imagePath);
 
   @override
   List<Object> get props => [];

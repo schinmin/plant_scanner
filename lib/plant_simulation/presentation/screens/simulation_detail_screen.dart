@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:plant_scanner_app/plant_simulation/domain/entity/farm_simulation_entity.dart';
 
 import 'package:plant_scanner_app/plant_scan/presentation/pages/main_home.dart';
+import 'package:plant_scanner_app/plant_simulation/presentation/widgets/build_schedule_task.dart';
 import 'package:plant_scanner_app/plant_simulation/presentation/widgets/cost_break_down_card.dart';
 import 'package:plant_scanner_app/plant_simulation/presentation/widgets/fertilizer_schedule_card.dart';
 import 'package:plant_scanner_app/plant_simulation/presentation/widgets/risk_factor_card.dart';
@@ -17,23 +18,23 @@ class SimulationSuccessScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
-      // appBar: AppBar(
-      //   title: const Text(
-      //     '🌾 စိုက်ပျိုးရေး ခန့်မှန်းချက်',
-      //     style: TextStyle(fontWeight: FontWeight.bold),
-      //   ),
-      //   backgroundColor: Colors.green,
-      //   foregroundColor: Colors.white,
-      //   elevation: 0,
-      //   actions: [
-      //     IconButton(
-      //       onPressed: () {
-      //         _navigateToHome(context);
-      //       },
-      //       icon: const Icon(Icons.home),
-      //     ),
-      //   ],
-      // ),
+      appBar: AppBar(
+        title: const Text(
+          '🌾 စိုက်ပျိုးရေး ခန့်မှန်းချက်',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Colors.green,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        actions: [
+          IconButton(
+            onPressed: () {
+              _navigateToHome(context);
+            },
+            icon: const Icon(Icons.home),
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -54,6 +55,12 @@ class SimulationSuccessScreen extends StatelessWidget {
             // ✅ Cost Breakdown
             CostBreakdownCard(costBreakdown: simulation.costBreakdown!),
             const SizedBox(height: 16),
+            //Schedule Tasks
+            buildScheduleTasks(
+              context: context,
+              scheduleTasks: simulation.scheduleTasks!,
+              plantingDate: simulation.createdAt!,
+            ),
 
             //✅ Fertilizer Schedule
             FertilizerScheduleCard(
@@ -80,58 +87,52 @@ class SimulationSuccessScreen extends StatelessWidget {
 
   // ============ Header ============
   Widget _buildSuccessHeader(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Colors.green, Colors.greenAccent],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return SafeArea(
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Colors.green, Colors.greenAccent],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.green.withOpacity(0.3),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
         ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.green.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.check_circle,
-              color: Colors.green,
-              size: 32,
-            ),
-          ),
-          const SizedBox(width: 16),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '🎉 အောင်မြင်ပါသည်!',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+        child: Row(
+          children: [
+            // Container(
+            //   padding: const EdgeInsets.all(12),
+            //   decoration: const BoxDecoration(
+            //     color: Colors.white,
+            //     shape: BoxShape.circle,
+            //   ),
+            //   child: const Icon(
+            //     Icons.check_circle,
+            //     color: Colors.green,
+            //     size: 32,
+            //   ),
+            // ),
+            const SizedBox(width: 30),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'သင်၏ စိုက်ပျိုးရေး ခန့်မှန်းချက်များ',
+                    style: TextStyle(color: Colors.white70, fontSize: 14),
                   ),
-                ),
-                Text(
-                  'သင်၏ စိုက်ပျိုးရေး ခန့်မှန်းချက်ကို အောင်မြင်စွာ ဖန်တီးနိုင်ခဲ့ပါသည်။',
-                  style: TextStyle(color: Colors.white70, fontSize: 14),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

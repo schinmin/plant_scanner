@@ -11,5 +11,5 @@ abstract class SimulationRepository {
     required String plantingDate,
   });
 
-  Future<Either<Failure, FarmSimulationEntity>> getFarmSimulation();
+  Future<Either<Failure, List<FarmSimulationEntity>>> getFarmSimulation();
 }

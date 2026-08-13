@@ -59,7 +59,9 @@ class SimulationDetailCard extends StatelessWidget {
           _buildDetailRow(
             Icons.calendar_today,
             'စိုက်ပျိုးရက်',
-            simulation.createdAt ?? "",
+            DateFormat(
+              'y-MM-dd',
+            ).format(simulation.createdAt ?? DateTime.now()),
           ),
         ],
       ),

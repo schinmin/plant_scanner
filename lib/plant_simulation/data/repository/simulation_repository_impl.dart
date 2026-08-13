@@ -27,8 +27,8 @@ class SimulationRepositoryImpl implements SimulationRepository {
   }
 
   @override
-  Future<Either<Failure, FarmSimulationEntity>> getFarmSimulation() {
-    // TODO: implement getFarmSimulation
-    throw UnimplementedError();
+  Future<Either<Failure, List<FarmSimulationEntity>>>
+  getFarmSimulation() async {
+    return await simulationDataSource.getSimulation();
   }
 }

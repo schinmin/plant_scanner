@@ -13,6 +13,8 @@ abstract class SimulationDatasources {
     required String soilType,
     required String plantingDate,
   });
+
+  Future<Either<Failure, List<FarmSimulationModel>>> getSimulation();
 }
 
 class SimulationDataSourceImpl implements SimulationDatasources {
@@ -33,7 +35,7 @@ class SimulationDataSourceImpl implements SimulationDatasources {
       debugPrint('========== SIMULATION REQUEST ==========');
 
       debugPrint('farm_name: $farmName');
-      debugPrint('rice_type: $plantType');
+      debugPrint('plant_type: $plantType');
       debugPrint('soil_type: $soilType');
       debugPrint('plant_area: $plantArea');
       debugPrint('planting_date: $plantingDate');
@@ -42,7 +44,7 @@ class SimulationDataSourceImpl implements SimulationDatasources {
         'https://argitech-production.up.railway.app/api/simulation',
         data: {
           'farm_name': farmName,
-          'rice_type': plantType,
+          'plant_type': plantType,
           'soil_type': soilType,
           'season': "မိုးရာသီ",
           'farm_area': plantArea,
@@ -93,6 +95,28 @@ class SimulationDataSourceImpl implements SimulationDatasources {
       debugPrint('STACKTRACE: $stackTrace');
 
       return Left(Failure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<FarmSimulationModel>>> getSimulation() async {
+    try {
+      final response = await apiService.dio.get("simulation/user");
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final result = response.data['data']['simulations'] as List<dynamic>;
+
+        final simulations = result
+            .map((simulation) => FarmSimulationModel.fromJson(simulation))
+            .toList();
+
+        return Right(simulations);
+      } else {
+        return Left(Failure("Error Datasources : ${response.data['message']}"));
+      }
+    } catch (e, stackTrace) {
+      debugPrint("Error ${e.toString()} StackTrace : ${stackTrace.toString()}");
+      return Left(Failure("Error Data ${e.toString()}"));
     }
   }
 }

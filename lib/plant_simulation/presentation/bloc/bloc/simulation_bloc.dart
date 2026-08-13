@@ -1,5 +1,4 @@
 import 'package:bloc/bloc.dart';
-import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 import 'package:meta/meta.dart';
 import 'package:plant_scanner_app/core/error/failure.dart';
@@ -13,6 +12,7 @@ class SimulationBloc extends Bloc<SimulationEvent, SimulationState> {
   final SimulationUsecase simulationUsecase;
   SimulationBloc(this.simulationUsecase) : super(SimulationInitial()) {
     on<CreateSimulationEvent>(_onCreateSimulation);
+    on<GetSimulationEvent>(_onGetSimulation);
   }
 
   Future<void> _onCreateSimulation(
@@ -36,6 +36,24 @@ class SimulationBloc extends Bloc<SimulationEvent, SimulationState> {
       );
     } catch (e) {
       emit(SimulationLoadedError(message: Failure("Error : ${e.toString()}")));
+    }
+  }
+
+  ////GetSimulation
+  ///
+  Future<void> _onGetSimulation(
+    GetSimulationEvent event,
+    Emitter<SimulationState> emit,
+  ) async {
+    try {
+      final result = await simulationUsecase.getSimulation();
+
+      result.fold(
+        (error) => emit(SimulationLoadedError(message: error)),
+        (result) => emit(GetSimulationData(result)),
+      );
+    } catch (e) {
+      emit(SimulationLoadedError(message: Failure("Error ${e.toString()}")));
     }
   }
 }

@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:plant_scanner_app/plant_simulation/domain/entity/costBreakDownEntity.dart';
 import 'package:plant_scanner_app/plant_simulation/domain/entity/recomand_fertilizer_scheduleEntity.dart';
 import 'package:plant_scanner_app/plant_simulation/domain/entity/risks_factorsEntity.dart';
+import 'package:plant_scanner_app/plant_simulation/domain/entity/schedule_task_entity.dart';
 
 class FarmSimulationEntity extends Equatable {
   final String? id;
@@ -12,20 +13,21 @@ class FarmSimulationEntity extends Equatable {
   final String? season;
   final int? farmArea;
   final String? plantingDate;
-  final int? expectedYieldPerAcre;
-  final int? totalProduction;
+  final num? expectedYieldPerAcre;
+  final num? totalProduction;
   final CostBreakDownEntity? costBreakdown;
-  final int? totalEstimatedCost;
-  final int? estimatedPricePerUnit;
-  final int? estimatedIncome;
-  final int? estimatedProfit;
-  final int? roiPercentage;
+  final num? totalEstimatedCost;
+  final num? estimatedPricePerUnit;
+  final num? estimatedIncome;
+  final num? estimatedProfit;
+  final num? roiPercentage;
   final List<RecommendFertilizerScheduleEntity>? recommendedFertilizerSchedule;
 
   final List<RisksFactorEntity>? riskFactors;
+  final List<ScheduleTaskEntity> scheduleTasks;
   final String? recommendation;
-  final String? createdAt;
-  final String? updatedAt;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   const FarmSimulationEntity({
     this.id,
@@ -46,6 +48,7 @@ class FarmSimulationEntity extends Equatable {
     this.roiPercentage,
     this.recommendedFertilizerSchedule,
     this.riskFactors,
+    required this.scheduleTasks,
     this.recommendation,
     this.createdAt,
     this.updatedAt,
@@ -69,6 +72,7 @@ class FarmSimulationEntity extends Equatable {
     roiPercentage,
     recommendedFertilizerSchedule,
     riskFactors,
+    scheduleTasks,
     recommendation,
     createdAt,
     updatedAt,

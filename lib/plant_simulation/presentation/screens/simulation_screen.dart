@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:plant_scanner_app/plant_simulation/presentation/bloc/bloc/simulation_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:plant_scanner_app/plant_simulation/presentation/screens/simulation_detail_screen.dart';
@@ -141,6 +142,19 @@ class _SimulationScreenState extends State<SimulationScreen> {
               ),
             );
           }
+          if (state is SimulationLoadedError) {
+            return Center(
+              child: Column(
+                children: [
+                  Text("Error ${state.message.message}"),
+                  IconButton(
+                    onPressed: () async {},
+                    icon: FaIcon(FontAwesomeIcons.refresh),
+                  ),
+                ],
+              ),
+            );
+          }
 
           if (state is SimulationLoaded) {
             return _buildSuccessScreen(state);
@@ -177,12 +191,12 @@ class _SimulationScreenState extends State<SimulationScreen> {
                 _buildTextField(
                   controller: _farmNameController,
                   focusNode: _farmNameFocus,
-                  label: 'Farm Name',
-                  hint: 'Enter your farm name',
+                  label: 'စိုက်ခင်းအမည်',
+                  hint: 'စိုက်ခင်းအမည်ရေးပါ။',
                   icon: Icons.area_chart,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Please enter farm name';
+                      return 'စိုက်ခင်းအမည် ရေးပေးပါ';
                     }
                     return null;
                   },
@@ -194,8 +208,8 @@ class _SimulationScreenState extends State<SimulationScreen> {
                 _buildTextField(
                   controller: _plantTypeController,
                   focusNode: _plantTypeFocus,
-                  label: 'Plant Type',
-                  hint: 'e.g., Rice, Wheat, Corn',
+                  label: 'အပင်အမျိုးအစား',
+                  hint: 'e.g.စပါး, ငရုတ်သီး, ပြောင်းဖူး',
                   icon: Icons.grass,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -211,12 +225,12 @@ class _SimulationScreenState extends State<SimulationScreen> {
                 _buildTextField(
                   controller: _soilTypeController,
                   focusNode: _soilTypeFocus,
-                  label: 'Soil Type',
-                  hint: 'e.g., Clay Loam, Sandy, Silty',
+                  label: 'မြေအမျိုးအစား',
+                  hint: 'e.g. နှုံးမြေ,',
                   icon: Icons.landscape,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Please enter soil type';
+                      return 'မြေအမျိုးအစားရေးပေးပါ';
                     }
                     return null;
                   },
@@ -228,13 +242,13 @@ class _SimulationScreenState extends State<SimulationScreen> {
                 _buildTextField(
                   controller: _farmAreaController,
                   focusNode: _farmAreaFocus,
-                  label: 'Farm Area',
-                  hint: 'Enter area in acres',
+                  label: 'စိုက်ခင်းအကျယ်',
+                  hint: 'စိုက်ခင်းအကျယ်',
                   icon: Icons.square_foot,
                   keyboardType: TextInputType.number,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Please enter farm area';
+                      return 'စိုက်ခင်းအကျယ်ရေးပေးပါ';
                     }
                     final area = double.tryParse(value.trim());
                     if (area == null || area <= 0) {
@@ -295,7 +309,7 @@ class _SimulationScreenState extends State<SimulationScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Create New Simulation',
+                      'AI Alert System ',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -303,7 +317,7 @@ class _SimulationScreenState extends State<SimulationScreen> {
                       ),
                     ),
                     Text(
-                      'Fill in the details below to start your farm simulation',
+                      'သက်ဆိုင်ရာ အချက်အလက် များကိုဖြည့်ပါ။',
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey.shade600,
@@ -397,7 +411,7 @@ class _SimulationScreenState extends State<SimulationScreen> {
         borderRadius: BorderRadius.circular(12),
         child: InputDecorator(
           decoration: InputDecoration(
-            labelText: 'Planting Date',
+            labelText: 'စိုက်ပျိုးမည့်ရက်',
             prefixIcon: Icon(
               Icons.calendar_today,
               color: Colors.green.shade700,
@@ -442,7 +456,7 @@ class _SimulationScreenState extends State<SimulationScreen> {
                     Icon(Icons.edit, size: 16, color: Colors.green.shade700),
                     const SizedBox(width: 4),
                     Text(
-                      'Change',
+                      'ရွေးချယ်ရန်',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.green.shade700,
@@ -480,7 +494,7 @@ class _SimulationScreenState extends State<SimulationScreen> {
             Icon(Icons.play_arrow, size: 24),
             SizedBox(width: 8),
             Text(
-              'Start Simulation',
+              'ခန့်မှန်းချက်များထုတ်မည်',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ],
@@ -688,73 +702,73 @@ class _SimulationScreenState extends State<SimulationScreen> {
     );
   }
 
-  void _showHelpDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.help_outline, color: Colors.green.shade700),
-            const SizedBox(width: 8),
-            const Text('How to Use'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHelpItem(
-              '🌾 Farm Name',
-              'Give your farm a unique name for identification',
-            ),
-            const SizedBox(height: 12),
-            _buildHelpItem(
-              '🌱 Plant Type',
-              'Select the type of crop you want to simulate',
-            ),
-            const SizedBox(height: 12),
-            _buildHelpItem(
-              '🧪 Soil Type',
-              'Choose the soil type for accurate growth predictions',
-            ),
-            const SizedBox(height: 12),
-            _buildHelpItem(
-              '📐 Farm Area',
-              'Enter the size of your farm in acres',
-            ),
-            const SizedBox(height: 12),
-            _buildHelpItem(
-              '📅 Planting Date',
-              'Select when you plan to start planting',
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Got it!'),
-          ),
-        ],
-      ),
-    );
-  }
+  // void _showHelpDialog(BuildContext context) {
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => AlertDialog(
+  //       title: Row(
+  //         children: [
+  //           Icon(Icons.help_outline, color: Colors.green.shade700),
+  //           const SizedBox(width: 8),
+  //           const Text('How to Use'),
+  //         ],
+  //       ),
+  //       content: Column(
+  //         mainAxisSize: MainAxisSize.min,
+  //         crossAxisAlignment: CrossAxisAlignment.start,
+  //         children: [
+  //           _buildHelpItem(
+  //             '🌾 Farm Name',
+  //             'Give your farm a unique name for identification',
+  //           ),
+  //           const SizedBox(height: 12),
+  //           _buildHelpItem(
+  //             '🌱 Plant Type',
+  //             'Select the type of crop you want to simulate',
+  //           ),
+  //           const SizedBox(height: 12),
+  //           _buildHelpItem(
+  //             '🧪 Soil Type',
+  //             'Choose the soil type for accurate growth predictions',
+  //           ),
+  //           const SizedBox(height: 12),
+  //           _buildHelpItem(
+  //             '📐 Farm Area',
+  //             'Enter the size of your farm in acres',
+  //           ),
+  //           const SizedBox(height: 12),
+  //           _buildHelpItem(
+  //             '📅 Planting Date',
+  //             'Select when you plan to start planting',
+  //           ),
+  //         ],
+  //       ),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () => Navigator.pop(context),
+  //           child: const Text('Got it!'),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
-  Widget _buildHelpItem(String title, String description) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            description,
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-          ),
-        ),
-      ],
-    );
-  }
+  // Widget _buildHelpItem(String title, String description) {
+  //   return Row(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       Text(
+  //         title,
+  //         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+  //       ),
+  //       const SizedBox(width: 8),
+  //       Expanded(
+  //         child: Text(
+  //           description,
+  //           style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
 }

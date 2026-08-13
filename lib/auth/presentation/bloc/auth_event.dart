@@ -6,6 +6,7 @@ sealed class AuthEvent extends Equatable {
   List<Object?> get props => [];
 }
 
+// ignore: must_be_immutable
 class RegisterRequest extends AuthEvent {
   final String name;
   final String phone;
@@ -23,6 +24,7 @@ class RegisterRequest extends AuthEvent {
   List<Object?> get props => [name, phone, password, fcmToken];
 }
 
+// ignore: must_be_immutable
 class LoginRequest extends AuthEvent {
   final String phone;
   final String password;

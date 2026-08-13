@@ -19,16 +19,11 @@ class GetapiresponseBloc
     PickAndScanEvent event,
     Emitter<GetapiresponseState> emit,
   ) async {
-    final picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    final image = event.imagePath;
 
-    if (image == null) {
-      emit(GetapiresponseFailure("No image selected"));
-      return;
-    }
     emit(GetapiresponseLoading());
 
-    final result = await getDiseaseUseCase(image.path);
+    final result = await getDiseaseUseCase(image);
     result.fold(
       (failure) => emit(GetapiresponseFailure(failure.message)),
       (response) => emit(GetapiresponseSuccess(response)),

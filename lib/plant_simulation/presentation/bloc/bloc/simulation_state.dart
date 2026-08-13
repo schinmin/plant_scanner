@@ -23,6 +23,14 @@ final class SimulationLoaded extends SimulationState {
   List<Object?> get props => [farmSimulation];
 }
 
+class GetSimulationData extends SimulationState {
+  final List<FarmSimulationEntity> farmSimulations;
+  GetSimulationData(this.farmSimulations);
+
+  @override
+  List<Object?> get props => [farmSimulations];
+}
+
 final class SimulationLoadedError extends SimulationState {
   final Failure message;
 

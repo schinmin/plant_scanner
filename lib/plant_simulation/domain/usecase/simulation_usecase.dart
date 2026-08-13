@@ -23,4 +23,8 @@ class SimulationUsecase {
       plantingDate: plantingDate,
     );
   }
+
+  Future<Either<Failure, List<FarmSimulationEntity>>> getSimulation() {
+    return simulationRepository.getFarmSimulation();
+  }
 }

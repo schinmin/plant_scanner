@@ -1,6 +1,7 @@
 import 'package:plant_scanner_app/plant_simulation/data/models/costBreakDown_model.dart';
 import 'package:plant_scanner_app/plant_simulation/data/models/recommend_fertilizer_schedule.dart';
 import 'package:plant_scanner_app/plant_simulation/data/models/risk_factor_model.dart';
+import 'package:plant_scanner_app/plant_simulation/data/models/schedule_task_model.dart';
 import 'package:plant_scanner_app/plant_simulation/domain/entity/farm_simulation_entity.dart';
 
 class FarmSimulationModel extends FarmSimulationEntity {
@@ -23,6 +24,7 @@ class FarmSimulationModel extends FarmSimulationEntity {
     super.roiPercentage,
     super.recommendedFertilizerSchedule,
     super.riskFactors,
+    required super.scheduleTasks,
     super.recommendation,
     super.createdAt,
     super.updatedAt,
@@ -60,7 +62,7 @@ class FarmSimulationModel extends FarmSimulationEntity {
 
       estimatedProfit: json['estimated_profit'] ?? 0,
 
-      roiPercentage: json['roi_percentage'] ?? 0,
+      roiPercentage: json['roi_percentage'],
 
       recommendedFertilizerSchedule:
           (json['recommended_fertilizer_schedule'] as List?)
@@ -76,12 +78,21 @@ class FarmSimulationModel extends FarmSimulationEntity {
             (item) => RiskFactorModel.fromJson(item as Map<String, dynamic>),
           )
           .toList(),
+      scheduleTasks:
+          (json['schedule_tasks'] as List?)
+              ?.map((item) => ScheduleTaskModel.fromJson(item))
+              .toList() ??
+          [],
 
       recommendation: json['recommendation']?.toString(),
 
-      createdAt: json['createdAt'] ?? "",
+      createdAt: (json['createdAt'] != null && json['createdAt'] is String)
+          ? DateTime.tryParse(json['createdAt'])
+          : null,
 
-      updatedAt: json['updatedAt'] ?? "",
+      updatedAt: (json['updatedAt'] != null && json['updatedAt'] is String)
+          ? DateTime.tryParse(json['updatedAt'])
+          : null,
     );
   }
 }

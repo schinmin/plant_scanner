@@ -48,12 +48,9 @@ class FertilizerScheduleCard extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: const BoxDecoration(
-              color: Colors.green,
-              shape: BoxShape.circle,
-            ),
+            decoration: const BoxDecoration(color: Colors.green),
             child: Text(
-              '${item.daysAfterPlanting}',
+              '${item.daysAfterPlanting} ရက်မြောက်',
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 12,
@@ -74,7 +71,7 @@ class FertilizerScheduleCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${item.amountPerAcre} / ဧက',
+                  '${item.amountPerAcre} / ၁ ဧက',
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
               ],

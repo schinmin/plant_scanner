@@ -20,3 +20,7 @@ class CreateSimulationEvent extends SimulationEvent {
     required this.plantingdate,
   });
 }
+
+class GetSimulationEvent extends SimulationEvent {
+  GetSimulationEvent();
+}
