@@ -52,21 +52,23 @@ class SimulationSuccessScreen extends StatelessWidget {
             SummaryCard(simulation: simulation),
             const SizedBox(height: 16),
 
-            // ✅ Cost Breakdown
-            CostBreakdownCard(costBreakdown: simulation.costBreakdown!),
-            const SizedBox(height: 16),
-            //Schedule Tasks
             buildScheduleTasks(
               context: context,
-              scheduleTasks: simulation.scheduleTasks!,
+              scheduleTasks: simulation.scheduleTasks,
               plantingDate: simulation.createdAt!,
             ),
+            const SizedBox(height: 10),
 
             //✅ Fertilizer Schedule
             FertilizerScheduleCard(
               schedule: simulation.recommendedFertilizerSchedule!,
             ),
             const SizedBox(height: 16),
+
+            // ✅ Cost Breakdown
+            CostBreakdownCard(costBreakdown: simulation.costBreakdown!),
+            const SizedBox(height: 16),
+            //Schedule Tasks
 
             // ✅ Risk Factors
             RiskFactorsCard(riskFactors: simulation.riskFactors!),

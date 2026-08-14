@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:plant_scanner_app/plant_scan/presentation/pages/main_home.dart';
 import 'package:plant_scanner_app/plant_simulation/presentation/bloc/bloc/simulation_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:plant_scanner_app/plant_simulation/presentation/screens/simulation_detail_screen.dart';
@@ -622,6 +623,11 @@ class _SimulationScreenState extends State<SimulationScreen> {
                           // context.read<SimulationBloc>().add(
                           //   ResetSimulationEvent(),
                           // );
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(builder: (context) => MainHome()),
+                            (route) => false,
+                          );
                         },
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.green.shade700,

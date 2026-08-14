@@ -41,8 +41,8 @@ class SummaryCard extends StatelessWidget {
             children: [
               _buildSummaryItem(
                 '🌾 အထွက်နှုန်း',
-                '${simulation.expectedYieldPerAcre} တင်း/ဧက',
-                'စုစုပေါင်း ${simulation.totalProduction} တင်း',
+                '${simulation.totalProduction}',
+                'စုစုပေါင်း ${simulation.totalProduction}',
               ),
               const SizedBox(width: 12),
               _buildSummaryItem(

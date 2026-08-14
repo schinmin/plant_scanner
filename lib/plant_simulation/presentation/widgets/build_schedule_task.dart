@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:plant_scanner_app/core/helper.dart';
 import 'package:plant_scanner_app/plant_simulation/domain/entity/schedule_task_entity.dart';
 
 Widget buildScheduleTasks({
@@ -109,7 +110,9 @@ Widget buildScheduleTasks({
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
-                                  '$days ရက်မြောက်',
+                                  days == '0'
+                                      ? dateFormat(plantingDate)
+                                      : '$days ရက်မြောက်',
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,

@@ -12,7 +12,7 @@ class ScheduleTaskModel extends ScheduleTaskEntity {
   factory ScheduleTaskModel.fromJson(Map<String, dynamic> json) {
     return ScheduleTaskModel(
       id: json["_id"] ?? "",
-      dayAfterPlanting: json["days_after_planting"] ?? 0,
+      dayAfterPlanting: json["days_after_planting"] ?? "",
       taskTitle: json["title"] ?? "",
       description: json["description"] ?? "",
       taskType: json["task_type"] ?? "",

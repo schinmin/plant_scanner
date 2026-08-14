@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import 'package:plant_scanner_app/plant_simulation/presentation/bloc/bloc/simulation_bloc.dart';
 import 'package:plant_scanner_app/plant_simulation/domain/entity/farm_simulation_entity.dart';
 import 'package:plant_scanner_app/plant_simulation/presentation/screens/simulation_detail_screen.dart';
-import 'package:plant_scanner_app/plant_simulation/presentation/screens/simulation_screen.dart';
 
 class MySimulationsScreen extends StatelessWidget {
   const MySimulationsScreen({super.key});
@@ -73,7 +72,32 @@ class MySimulationsScreen extends StatelessWidget {
             return _buildLoadingState();
           }
 
-          return const SizedBox();
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text("မင်းရဲ့ စိုက်ခင်း များမရှိသေးပါ။"),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    context.read<SimulationBloc>().add(GetSimulationEvent());
+                  },
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Try Again'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green.shade700,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
         },
       ),
       // floatingActionButton: FloatingActionButton.extended(
