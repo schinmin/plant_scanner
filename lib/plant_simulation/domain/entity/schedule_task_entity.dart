@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 
 class ScheduleTaskEntity extends Equatable {
   final String id;
-  final num dayAfterPlanting;
+  final String dayAfterPlanting;
   final String taskTitle;
   final String description;
   final String taskType;

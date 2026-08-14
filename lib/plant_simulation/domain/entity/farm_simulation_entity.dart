@@ -11,7 +11,7 @@ class FarmSimulationEntity extends Equatable {
   final String? riceType;
   final String? soilType;
   final String? season;
-  final int? farmArea;
+  final num? farmArea;
   final String? plantingDate;
   final num? expectedYieldPerAcre;
   final num? totalProduction;
