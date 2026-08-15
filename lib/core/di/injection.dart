@@ -1,3 +1,4 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -8,6 +9,7 @@ import 'package:plant_scanner_app/auth/domain/repository/auth_repository.dart';
 import 'package:plant_scanner_app/auth/domain/usecase/auth_usecase.dart';
 import 'package:plant_scanner_app/auth/presentation/bloc/auth_bloc.dart';
 import 'package:plant_scanner_app/core/network/api_service.dart';
+import 'package:plant_scanner_app/core/network/network_info.dart';
 import 'package:plant_scanner_app/plant_scan/data/datasources/get_crop_market_datasource.dart';
 import 'package:plant_scanner_app/plant_scan/data/datasources/get_response_datasource.dart';
 import 'package:plant_scanner_app/plant_scan/data/repository_imp/get_crop_market_repol_impl.dart';
@@ -46,9 +48,12 @@ Future<void> initDependencies() async {
 void _initCoreModule() {
   // Dio
   sl.registerLazySingleton<Dio>(() => Dio());
+  sl.registerLazySingleton<Connectivity>(() => Connectivity());
 
   // API Service
   sl.registerLazySingleton<ApiService>(() => ApiService());
+
+  sl.registerLazySingleton<NetworkInfo>(() => NetworkInfoImpl(sl()));
 
   // Add interceptors if needed
   sl<Dio>().interceptors.addAll([
@@ -116,7 +121,10 @@ void _initCropMarketModule() {
 
   // Repositories
   sl.registerLazySingleton<CropMarketRepository>(
-    () => GetCropMarketRepolImpl(sl<GetCropMarketDatasource>()),
+    () => GetCropMarketRepolImpl(
+      sl<GetCropMarketDatasource>(),
+      sl<NetworkInfo>(),
+    ),
   );
 
   // Use Cases

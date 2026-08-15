@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:plant_scanner_app/plant_scan/presentation/pages/main_home.dart';
+import 'package:plant_scanner_app/plant_simulation/data/models/region_model.dart';
 import 'package:plant_scanner_app/plant_simulation/presentation/bloc/bloc/simulation_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:plant_scanner_app/plant_simulation/presentation/screens/simulation_detail_screen.dart';
+import 'package:plant_scanner_app/plant_simulation/presentation/widgets/drop_down_soiltype.dart';
+import 'package:plant_scanner_app/plant_simulation/presentation/widgets/drow_down_region.dart';
 
 class SimulationScreen extends StatefulWidget {
   const SimulationScreen({super.key});
@@ -19,7 +22,11 @@ class _SimulationScreenState extends State<SimulationScreen> {
   final TextEditingController _plantTypeController = TextEditingController();
   final TextEditingController _soilTypeController = TextEditingController();
   final TextEditingController _farmAreaController = TextEditingController();
-
+  final TextEditingController _seasonController = TextEditingController();
+  Region? _selectedRegion;
+  String _selectedSoilType = '';
+  String? _locationError;
+  String? _soilTypeError;
   // Date picker
   DateTime _selectedDate = DateTime.now();
 
@@ -31,6 +38,7 @@ class _SimulationScreenState extends State<SimulationScreen> {
   final FocusNode _plantTypeFocus = FocusNode();
   final FocusNode _soilTypeFocus = FocusNode();
   final FocusNode _farmAreaFocus = FocusNode();
+  final FocusNode _seasonFocus = FocusNode();
 
   @override
   void dispose() {
@@ -38,10 +46,12 @@ class _SimulationScreenState extends State<SimulationScreen> {
     _plantTypeController.dispose();
     _soilTypeController.dispose();
     _farmAreaController.dispose();
+    _seasonController.dispose();
     _farmNameFocus.dispose();
     _plantTypeFocus.dispose();
     _soilTypeFocus.dispose();
     _farmAreaFocus.dispose();
+    _seasonFocus.dispose();
     super.dispose();
   }
 
@@ -74,15 +84,31 @@ class _SimulationScreenState extends State<SimulationScreen> {
   }
 
   void _submitForm() {
+    if (_selectedRegion == null) {
+      setState(() {
+        _locationError = 'တိုင်းဒေသကြီး/ပြည်နယ် ရွေးချယ်ပါ';
+      });
+      return;
+    }
+
+    if (_selectedSoilType.isEmpty) {
+      setState(() {
+        _soilTypeError = 'မြေအမျိုးအစား ရွေးချယ်ပါ';
+      });
+      return;
+    }
+
     if (_formKey.currentState!.validate()) {
       // Dispatch event to BLoC
       context.read<SimulationBloc>().add(
         CreateSimulationEvent(
           farmName: _farmNameController.text.trim(),
           plantType: _plantTypeController.text.trim(),
-          soilType: _soilTypeController.text.trim(),
+          soilType: _selectedSoilType,
           plantArea: _farmAreaController.text.trim(),
           plantingdate: _selectedDate.toString(),
+          location: _selectedRegion!.nameMm,
+          season: _seasonController.text.trim(),
         ),
       );
 
@@ -149,7 +175,13 @@ class _SimulationScreenState extends State<SimulationScreen> {
                 children: [
                   Text("Error ${state.message.message}"),
                   IconButton(
-                    onPressed: () async {},
+                    onPressed: () async {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (context) => MainHome()),
+                        (route) => false,
+                      );
+                    },
                     icon: FaIcon(FontAwesomeIcons.refresh),
                   ),
                 ],
@@ -187,7 +219,20 @@ class _SimulationScreenState extends State<SimulationScreen> {
                 // Header
                 _buildHeader(),
                 const SizedBox(height: 32),
-
+                RegionDropdown(
+                  label: 'တိုင်းဒေသကြီး/ပြည်နယ်',
+                  hintText: 'ကျေးဇူးပြု၍ ရွေးချယ်ပါ',
+                  selectedRegion: _selectedRegion,
+                  onChanged: (Region? region) {
+                    setState(() {
+                      _selectedRegion = region;
+                      _locationError = null; // Error ကိုရှင်းပါ
+                    });
+                  },
+                  isRequired: true,
+                  errorText: _locationError,
+                ),
+                const SizedBox(height: 20),
                 // Farm Name Field
                 _buildTextField(
                   controller: _farmNameController,
@@ -205,6 +250,7 @@ class _SimulationScreenState extends State<SimulationScreen> {
                 ),
                 const SizedBox(height: 20),
 
+                const SizedBox(height: 20),
                 // Plant Type Field
                 _buildTextField(
                   controller: _plantTypeController,
@@ -222,20 +268,39 @@ class _SimulationScreenState extends State<SimulationScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Soil Type Field
+                //Season Type Text Field
                 _buildTextField(
-                  controller: _soilTypeController,
-                  focusNode: _soilTypeFocus,
-                  label: 'မြေအမျိုးအစား',
-                  hint: 'e.g. နှုံးမြေ,',
-                  icon: Icons.landscape,
+                  controller: _seasonController,
+                  focusNode: _seasonFocus,
+                  label: 'ရာသီဥတု',
+                  hint: 'e.g. မိုးရာသီ,ဆောင်းရာသီ,နွေရာသီ',
+                  icon: Icons.ramen_dining,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'မြေအမျိုးအစားရေးပေးပါ';
+                      return 'လက်ရှိရာသီဥတုကိုရေးပေးပါ။';
                     }
                     return null;
                   },
-                  onFieldSubmitted: (_) => _farmAreaFocus.requestFocus(),
+                  onFieldSubmitted: (_) => _seasonFocus.requestFocus(),
+                ),
+                const SizedBox(height: 20),
+
+                // Soil Type Field
+                //
+                SoilTypeDropdown(
+                  label: 'မြေအမျိုးအစား',
+                  hintText: 'သင့်တော်သော မြေအမျိုးအစားကို ရွေးပါ',
+                  selectedRegion: _selectedRegion,
+                  selectedSoilType: _selectedSoilType, // ✅ String
+                  onChanged: (String soilType) {
+                    // ✅ String လက်ခံမယ်
+                    setState(() {
+                      _selectedSoilType = soilType;
+                      _soilTypeError = null;
+                    });
+                  },
+                  isRequired: true,
+                  errorText: _soilTypeError,
                 ),
                 const SizedBox(height: 20),
 
@@ -310,7 +375,7 @@ class _SimulationScreenState extends State<SimulationScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'AI Alert System ',
+                      'Smart Farming Simulation',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,

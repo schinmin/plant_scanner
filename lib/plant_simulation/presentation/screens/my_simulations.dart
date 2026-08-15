@@ -1,43 +1,33 @@
+// lib/plant_simulation/presentation/screens/my_simulations_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:plant_scanner_app/core/notifications/schedule_tasks_notification.dart';
+import 'package:plant_scanner_app/plant_simulation/data/models/schedule_task_model.dart';
 import 'package:plant_scanner_app/plant_simulation/presentation/bloc/bloc/simulation_bloc.dart';
 import 'package:plant_scanner_app/plant_simulation/domain/entity/farm_simulation_entity.dart';
 import 'package:plant_scanner_app/plant_simulation/presentation/screens/simulation_detail_screen.dart';
 
-class MySimulationsScreen extends StatelessWidget {
+class MySimulationsScreen extends StatefulWidget {
   const MySimulationsScreen({super.key});
+
+  @override
+  State<MySimulationsScreen> createState() => _MySimulationsScreenState();
+}
+
+class _MySimulationsScreenState extends State<MySimulationsScreen> {
+  late ScheduleTaskNotificationService _notificationService;
+
+  @override
+  void initState() {
+    super.initState();
+    _notificationService = ScheduleTaskNotificationService();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(
-      //   title: const Text(
-      //     'My Simulations',
-      //     style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-      //   ),
-      //   backgroundColor: Colors.green.shade700,
-      //   elevation: 0,
-      //   centerTitle: true,
-      //   leading: IconButton(
-      //     icon: const Icon(Icons.arrow_back, color: Colors.white),
-      //     onPressed: () => Navigator.pop(context),
-      //   ),
-      //   actions: [
-      //     IconButton(
-      //       icon: const Icon(Icons.refresh, color: Colors.white),
-      //       onPressed: () {
-      //         context.read<SimulationBloc>().add(GetSimulationEvent());
-      //         ScaffoldMessenger.of(context).showSnackBar(
-      //           const SnackBar(
-      //             content: Text('Refreshing simulations...'),
-      //             duration: Duration(seconds: 1),
-      //           ),
-      //         );
-      //       },
-      //     ),
-      //   ],
-      // ),
       body: BlocConsumer<SimulationBloc, SimulationState>(
         listener: (context, state) {
           if (state is SimulationLoadedError) {
@@ -48,10 +38,6 @@ class MySimulationsScreen extends StatelessWidget {
                 duration: const Duration(seconds: 3),
               ),
             );
-          } else if (state is SimulationLoading) {
-            const Center(child: CircularProgressIndicator());
-            // Refresh the list after deletion
-            // context.read<SimulationBloc>().add(GetSimulationsEvent());
           }
         },
         builder: (context, state) {
@@ -65,7 +51,6 @@ class MySimulationsScreen extends StatelessWidget {
             }
             return _buildSimulationList(state.farmSimulations, context);
           } else if (state is SimulationInitial) {
-            // Trigger initial load
             WidgetsBinding.instance.addPostFrameCallback((_) {
               context.read<SimulationBloc>().add(GetSimulationEvent());
             });
@@ -76,7 +61,7 @@ class MySimulationsScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text("မင်းရဲ့ စိုက်ခင်း များမရှိသေးပါ။"),
+                const Text("မင်းရဲ့ စိုက်ခင်း များမရှိသေးပါ။"),
                 ElevatedButton.icon(
                   onPressed: () {
                     context.read<SimulationBloc>().add(GetSimulationEvent());
@@ -100,23 +85,12 @@ class MySimulationsScreen extends StatelessWidget {
           );
         },
       ),
-      // floatingActionButton: FloatingActionButton.extended(
-      //   onPressed: () {
-      //     Navigator.pushAndRemoveUntil(
-      //       context,
-      //       MaterialPageRoute(builder: (context) => SimulationScreen()),
-      //       (route) => false,
-      //     );
-      //   },
-      //   backgroundColor: Colors.green.shade700,
-      //   icon: const Icon(Icons.add, color: Colors.white),
-      //   label: const Text(
-      //     'New Simulation',
-      //     style: TextStyle(color: Colors.white),
-      //   ),
-      // ),
     );
   }
+
+  // ==========================================
+  // Loading, Error, Empty States
+  // ==========================================
 
   Widget _buildLoadingState() {
     return const Center(
@@ -245,30 +219,55 @@ class MySimulationsScreen extends StatelessWidget {
     );
   }
 
+  // ==========================================
+  // Simulation List
+  // ==========================================
+
   Widget _buildSimulationList(
     List<FarmSimulationEntity> simulations,
     BuildContext context,
   ) {
+    // schedule_tasks ရှိတဲ့ simulations တွေကိုပဲ ရွေးပါ
+    final simulationsWithTasks = simulations
+        .where((sim) => sim.scheduleTasks.isNotEmpty)
+        .toList();
+
     return RefreshIndicator(
       onRefresh: () async {
         context.read<SimulationBloc>().add(GetSimulationEvent());
       },
       color: Colors.green,
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: simulations.length,
-        itemBuilder: (context, index) {
-          final simulation = simulations[index];
-          return _buildSimulationCard(simulation, context);
-        },
+      child: Column(
+        children: [
+          // ✅ "အားလုံး Notification ပေးပါ" Button
+          if (simulationsWithTasks.isNotEmpty)
+            _buildScheduleAllButton(simulationsWithTasks, context),
+
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: simulations.length,
+              itemBuilder: (context, index) {
+                final simulation = simulations[index];
+                return _buildSimulationCard(simulation, context);
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
+
+  // ==========================================
+  // Simulation Card with Notification Button
+  // ==========================================
 
   Widget _buildSimulationCard(
     FarmSimulationEntity simulation,
     BuildContext context,
   ) {
+    final hasTasks = simulation.scheduleTasks?.isNotEmpty ?? false;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -286,7 +285,6 @@ class MySimulationsScreen extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
-            // Navigate to simulation detail
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -301,6 +299,71 @@ class MySimulationsScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    hasTasks
+                        ? ElevatedButton.icon(
+                            onPressed: () {
+                              _scheduleNotificationsForSimulation(
+                                simulation,
+                                context,
+                              );
+                            },
+                            icon: const Icon(
+                              Icons.notifications_active,
+                              size: 18,
+                            ),
+                            label: const Text('Notification ပေးပါ'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue.shade700,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          )
+                        : Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade200,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.notifications_off,
+                                  size: 16,
+                                  color: Colors.grey.shade600,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'No Tasks',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                    _buildInfoChip(
+                      icon: Icons.calendar_today,
+                      label: DateFormat(
+                        'y-MM-dd',
+                      ).format(simulation.createdAt ?? DateTime.now()),
+                    ),
+                  ],
+                ),
+
                 // Header with farm name and status
                 Row(
                   children: [
@@ -311,7 +374,7 @@ class MySimulationsScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
-                        Icons.three_k,
+                        Icons.agriculture,
                         color: Colors.green.shade700,
                         size: 24,
                       ),
@@ -345,24 +408,22 @@ class MySimulationsScreen extends StatelessWidget {
                 const SizedBox(height: 16),
 
                 // Details row
-                Row(
+                Column(
                   children: [
-                    _buildInfoChip(
-                      icon: Icons.landscape,
-                      label: simulation.soilType ?? "",
-                    ),
-                    const SizedBox(width: 8),
-                    _buildInfoChip(
-                      icon: Icons.square_foot,
-                      label:
-                          '${simulation.farmArea?.toStringAsFixed(1) ?? '0'} acres',
-                    ),
-                    const SizedBox(width: 8),
-                    _buildInfoChip(
-                      icon: Icons.calendar_today,
-                      label: DateFormat(
-                        'y-MM-dd',
-                      ).format(simulation.createdAt ?? DateTime.now()),
+                    Row(
+                      children: [
+                        _buildInfoChip(
+                          icon: Icons.landscape,
+                          label: simulation.soilType ?? "",
+                        ),
+                        const SizedBox(width: 8),
+                        _buildInfoChip(
+                          icon: Icons.square_foot,
+                          label:
+                              '${simulation.farmArea?.toStringAsFixed(1) ?? '0'} acres',
+                        ),
+                        const SizedBox(width: 8),
+                      ],
                     ),
                   ],
                 ),
@@ -400,44 +461,52 @@ class MySimulationsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
 
-                // Action buttons
+                // ✅ Action buttons with Notification
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    TextButton.icon(
-                      onPressed: () {
-                        _showDeleteConfirmation(context, simulation);
-                      },
-                      icon: const Icon(Icons.delete_outline, size: 18),
-                      label: const Text('Delete'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.red.shade700,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                SimulationSuccessScreen(simulation: simulation),
+                    // ✅ Notification Button (left side)
+
+                    // Right side buttons
+                    Row(
+                      children: [
+                        TextButton.icon(
+                          onPressed: () {
+                            _showDeleteConfirmation(context, simulation);
+                          },
+                          icon: const Icon(Icons.delete_outline, size: 18),
+                          label: const Text('Delete'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.red.shade700,
                           ),
-                        );
-                      },
-                      icon: const Icon(Icons.visibility, size: 18),
-                      label: const Text('View Details'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green.shade700,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                        const SizedBox(width: 8),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => SimulationSuccessScreen(
+                                  simulation: simulation,
+                                ),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.visibility, size: 18),
+                          label: const Text('View Details'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green.shade700,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
@@ -448,6 +517,187 @@ class MySimulationsScreen extends StatelessWidget {
       ),
     );
   }
+
+  // ==========================================
+  // Notification Functions
+  // ==========================================
+
+  /// ✅ Simulation တစ်ခုအတွက် Notification schedule လုပ်ခြင်း
+  Future<void> _scheduleNotificationsForSimulation(
+    FarmSimulationEntity simulation,
+    BuildContext context,
+  ) async {
+    try {
+      // Loading indicator
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              ),
+              SizedBox(width: 12),
+              Text('Scheduling notifications...'),
+            ],
+          ),
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      // Entity ကို Model ပြောင်းပါ
+      final model = simulation.scheduleTasks;
+
+      final scheduleTasks = model
+          .map((task) => ScheduleTaskModel.fromEntity(task))
+          .toList();
+
+      // Notification schedule လုပ်ပါ
+      await _notificationService.scheduleTasksNotifications(scheduleTasks);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text('✅ Notifications scheduled successfully!'),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(child: Text('❌ Failed: ${e.toString()}')),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+      print('❌ Error scheduling notifications: $e');
+    }
+  }
+
+  /// ✅ အားလုံးကို တစ်ခါတည်း Notification schedule လုပ်ခြင်း
+  Future<void> _scheduleAllNotifications(
+    List<FarmSimulationEntity> simulations,
+    BuildContext context,
+  ) async {
+    int successCount = 0;
+    int failCount = 0;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Row(
+          children: [
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            ),
+            SizedBox(width: 12),
+            Text('Scheduling all notifications...'),
+          ],
+        ),
+        duration: Duration(seconds: 3),
+      ),
+    );
+
+    for (final simulation in simulations) {
+      try {
+        final models = simulation.scheduleTasks
+            .map((task) => ScheduleTaskModel.fromEntity(task))
+            .toList();
+        await _notificationService.scheduleTasksNotifications(models);
+        successCount++;
+      } catch (e) {
+        failCount++;
+        print('❌ Failed for ${simulation.farmName}: $e');
+      }
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '✅ $successCount simulations scheduled, $failCount failed',
+          ),
+          backgroundColor: failCount == 0 ? Colors.green : Colors.orange,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  /// ✅ "အားလုံး Notification ပေးပါ" Button
+  Widget _buildScheduleAllButton(
+    List<FarmSimulationEntity> simulationsWithTasks,
+    BuildContext context,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: () {
+            _scheduleAllNotifications(simulationsWithTasks, context);
+          },
+          icon: const Icon(Icons.notifications_active),
+          label: Text(
+            'အားလုံး Notification ပေးပါ (${simulationsWithTasks.length})',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.orange.shade700,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// ✅ Notification အားလုံးကို ပယ်ဖျက်ခြင်း (AppBar အတွက်)
+  Future<void> _cancelAllNotifications() async {
+    await _notificationService.cancelAllNotifications();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('🗑️ All notifications cancelled'),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  // ==========================================
+  // Helper Widgets
+  // ==========================================
 
   Widget _buildStatusBadge(FarmSimulationEntity simulation) {
     final isProfitable =
@@ -469,8 +719,8 @@ class MySimulationsScreen extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             isProfitable
-                ? 'မြတ်နိုင်သည့်စိုက်ခင်း'
-                : 'အရှုံးပေါ် နိုင်သည့်စိုက်ခင်း',
+                ? 'မြတ်နိုင်သည့်စိုက်ခင်း'
+                : 'အရှုံးပေါ် နိုင်သည့်စိုက်ခင်း',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,

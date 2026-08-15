@@ -1,11 +1,14 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:plant_scanner_app/auth/presentation/bloc/auth_bloc.dart';
 import 'package:plant_scanner_app/auth/presentation/screens/splash_screen.dart';
 import 'package:plant_scanner_app/core/di/injection.dart';
 import 'package:plant_scanner_app/core/notifications/fcm_service.dart';
+import 'package:plant_scanner_app/core/notifications/local_notification_service.dart';
+import 'package:plant_scanner_app/core/notifications/noti_test.dart';
 import 'package:plant_scanner_app/firebase_options.dart';
 
 import 'package:plant_scanner_app/plant_scan/presentation/crop_prices/crop_prices_bloc.dart';
@@ -60,9 +63,42 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   final fcmService = FCMService();
   final token = await fcmService.initialize();
+  final notificationService = NotificationService();
+  await notificationService.initNotification();
+
+  // ✅ Notification tap handler
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
+  final initializationSettings = InitializationSettings(
+    android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+    iOS: DarwinInitializationSettings(),
+  );
+
+  await flutterLocalNotificationsPlugin.initialize(
+    settings: initializationSettings,
+    onDidReceiveNotificationResponse: (NotificationResponse response) {
+      _handleNotificationTap(response);
+    },
+  );
   debugPrint("Main FCM TOKEN : ${token.toString()}");
+
+  await QuickTest.runQuickTest();
   await initDependencies();
   runApp(const MyApp());
+}
+
+void _handleNotificationTap(NotificationResponse response) {
+  final String? payload = response.payload;
+
+  if (payload == null || payload.isEmpty) {
+    print('📬 Notification tapped but no payload');
+    return;
+  }
+
+  print('📬 Notification tapped! Task ID: $payload');
+
+  // TODO: သင့်တော်တဲ့ Screen ကို navigate လုပ်ပါ
 }
 
 class MyApp extends StatelessWidget {

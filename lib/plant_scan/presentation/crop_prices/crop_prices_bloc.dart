@@ -16,13 +16,26 @@ class CropPricesBloc extends Bloc<CropPricesEvent, CropPricesState> {
     GetCropMarketEvent event,
     Emitter<CropPricesState> emit,
   ) async {
-    emit(CropPricesLoadingState());
-
-    final result = await getCropMarketUseCase.call(1);
+    if (event.page == 1) {
+      emit(CropPricesLoadingState());
+    }
+    final result = await getCropMarketUseCase.call(
+      page: event.page,
+      search: event.search,
+    );
 
     result.fold(
       (failure) => emit(CropPricesLoadedErrorState("Error ${failure.message}")),
-      (cropPrices) => emit(CropPricesLoadedState(cropPrices)),
+      (response) {
+        final currentList = (state is CropPricesLoadedState && event.page > 1)
+            ? (state as CropPricesLoadedState).cropmarkets
+            : <CropMarket>[];
+
+        final newList = [...currentList, ...response];
+        final hasMore = response.length >= 10;
+
+        emit(CropPricesLoadedState(newList, hasMore, newList.length));
+      },
     );
   }
 }

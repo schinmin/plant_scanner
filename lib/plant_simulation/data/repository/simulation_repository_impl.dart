@@ -16,6 +16,8 @@ class SimulationRepositoryImpl implements SimulationRepository {
     required String soilType,
     required String plantingArea,
     required String plantingDate,
+    required String location,
+    required String season,
   }) async {
     return await simulationDataSource.createSimulation(
       farmName: farmName,
@@ -23,6 +25,8 @@ class SimulationRepositoryImpl implements SimulationRepository {
       soilType: soilType,
       plantArea: plantingArea,
       plantingDate: plantingDate,
+      season: season,
+      location: location,
     );
   }
 

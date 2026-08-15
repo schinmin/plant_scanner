@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:plant_scanner_app/core/database/shared_prefercences.dart';
 import 'package:plant_scanner_app/core/error/failure.dart';
 import 'package:plant_scanner_app/core/network/api_service.dart';
 import 'package:plant_scanner_app/plant_simulation/data/models/farm_simulation_model.dart';
@@ -12,6 +13,8 @@ abstract class SimulationDatasources {
     required String plantArea,
     required String soilType,
     required String plantingDate,
+    required String season,
+    required String location,
   });
 
   Future<Either<Failure, List<FarmSimulationModel>>> getSimulation();
@@ -29,6 +32,8 @@ class SimulationDataSourceImpl implements SimulationDatasources {
     required String plantArea,
     required String soilType,
     required String plantingDate,
+    required String location,
+    required String season,
   }) async {
     try {
       // farm_name,rice_type,soil_type,season,farm_area,planting_date,device_token}
@@ -40,16 +45,19 @@ class SimulationDataSourceImpl implements SimulationDatasources {
       debugPrint('plant_area: $plantArea');
       debugPrint('planting_date: $plantingDate');
 
+      final token = await localStorageService.getFcmToken();
+
       final response = await apiService.dio.post(
         'https://argitech-production.up.railway.app/api/simulation',
         data: {
           'farm_name': farmName,
           'plant_type': plantType,
           'soil_type': soilType,
-          'season': "မိုးရာသီ",
+          'season': season,
           'farm_area': plantArea,
           'planting_date': plantingDate,
-          'device_token': "abc",
+          'location': location,
+          'device_token': token ?? "abc",
         },
       );
 

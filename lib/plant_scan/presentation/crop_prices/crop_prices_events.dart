@@ -8,7 +8,9 @@ abstract class CropPricesEvent extends Equatable {
 }
 
 class GetCropMarketEvent extends CropPricesEvent {
-  const GetCropMarketEvent();
+  final int page;
+  final String search;
+  const GetCropMarketEvent({required this.page, required this.search});
 
   @override
   List<Object> get props => [];

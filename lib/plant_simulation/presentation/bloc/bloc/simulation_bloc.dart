@@ -28,6 +28,8 @@ class SimulationBloc extends Bloc<SimulationEvent, SimulationState> {
         plantingArea: event.plantArea,
         soilType: event.soilType,
         plantingDate: event.plantingdate,
+        location: event.location,
+        season: event.season,
       );
       simulation.fold(
         (failure) => emit(SimulationLoadedError(message: Failure("$failure"))),

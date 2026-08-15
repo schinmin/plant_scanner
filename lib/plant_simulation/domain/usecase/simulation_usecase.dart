@@ -14,6 +14,8 @@ class SimulationUsecase {
     required String soilType,
     required String plantingArea,
     required String plantingDate,
+    required String season,
+    required String location,
   }) {
     return simulationRepository.createFarmSimulation(
       farmName: farmName,
@@ -21,6 +23,8 @@ class SimulationUsecase {
       soilType: soilType,
       plantingArea: plantingArea,
       plantingDate: plantingDate,
+      season: season,
+      location: location,
     );
   }
 

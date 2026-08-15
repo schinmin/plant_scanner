@@ -9,6 +9,8 @@ abstract class SimulationRepository {
     required String soilType,
     required String plantingArea,
     required String plantingDate,
+    required String location,
+    required String season,
   });
 
   Future<Either<Failure, List<FarmSimulationEntity>>> getFarmSimulation();

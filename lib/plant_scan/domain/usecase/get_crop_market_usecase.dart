@@ -8,7 +8,10 @@ class GetCropMarketUseCase {
 
   GetCropMarketUseCase(this.repository);
 
-  Future<Either<Failure, List<CropMarket>>> call(int page) async {
-    return await repository.getCropMarkets(page);
+  Future<Either<Failure, List<CropMarket>>> call({
+    required int page,
+    required String search,
+  }) async {
+    return await repository.getCropMarkets(page: page, search: search);
   }
 }

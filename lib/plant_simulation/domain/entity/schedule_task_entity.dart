@@ -4,6 +4,7 @@ class ScheduleTaskEntity extends Equatable {
   final String id;
   final String dayAfterPlanting;
   final String taskTitle;
+  final String scheduledDate;
   final String description;
   final String taskType;
 
@@ -11,6 +12,7 @@ class ScheduleTaskEntity extends Equatable {
     required this.id,
     required this.dayAfterPlanting,
     required this.taskTitle,
+    required this.scheduledDate,
     required this.description,
     required this.taskType,
   });
@@ -20,6 +22,7 @@ class ScheduleTaskEntity extends Equatable {
     id,
     dayAfterPlanting,
     taskTitle,
+    scheduledDate,
     description,
     taskType,
   ];

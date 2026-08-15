@@ -13,7 +13,14 @@ class CropPricesLoadingState extends CropPricesState {}
 class CropPricesLoadedState extends CropPricesState {
   final List<CropMarket> cropmarkets;
 
-  const CropPricesLoadedState(this.cropmarkets);
+  final bool hasMoreData;
+  final int totalCount;
+
+  const CropPricesLoadedState(
+    this.cropmarkets,
+    this.hasMoreData,
+    this.totalCount,
+  );
 
   @override
   List<Object?> get props => [cropmarkets];

@@ -12,12 +12,16 @@ class CreateSimulationEvent extends SimulationEvent {
   final String soilType;
   final String plantArea;
   final String plantingdate;
+  final String location;
+  final String season;
   CreateSimulationEvent({
     required this.farmName,
     required this.plantType,
     required this.soilType,
     required this.plantArea,
     required this.plantingdate,
+    required this.location,
+    required this.season,
   });
 }
 
