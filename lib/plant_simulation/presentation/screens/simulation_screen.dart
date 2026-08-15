@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:plant_scanner_app/plant_scan/presentation/pages/main_home.dart';
 import 'package:plant_scanner_app/plant_simulation/data/models/region_model.dart';
 import 'package:plant_scanner_app/plant_simulation/presentation/bloc/bloc/simulation_bloc.dart';
@@ -39,6 +38,15 @@ class _SimulationScreenState extends State<SimulationScreen> {
   final FocusNode _soilTypeFocus = FocusNode();
   final FocusNode _farmAreaFocus = FocusNode();
   final FocusNode _seasonFocus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<SimulationBloc>().add(ResetSimulationEvent());
+    });
+  }
 
   @override
   void dispose() {
@@ -84,65 +92,63 @@ class _SimulationScreenState extends State<SimulationScreen> {
   }
 
   void _submitForm() {
-    if (_selectedRegion == null) {
-      setState(() {
-        _locationError = 'တိုင်းဒေသကြီး/ပြည်နယ် ရွေးချယ်ပါ';
-      });
+    setState(() {
+      _locationError = _selectedRegion == null
+          ? 'တိုင်းဒေသကြီး/ပြည်နယ် ရွေးချယ်ပါ'
+          : null;
+      _soilTypeError = _selectedSoilType.isEmpty
+          ? 'မြေအမျိုးအစား ရွေးချယ်ပါ'
+          : null;
+    });
+
+    final formValid = _formKey.currentState?.validate() ?? false;
+    if (!formValid || _locationError != null || _soilTypeError != null) {
       return;
     }
 
-    if (_selectedSoilType.isEmpty) {
-      setState(() {
-        _soilTypeError = 'မြေအမျိုးအစား ရွေးချယ်ပါ';
-      });
-      return;
-    }
+    final plantingDate = DateFormat('yyyy-MM-dd').format(_selectedDate);
 
-    if (_formKey.currentState!.validate()) {
-      // Dispatch event to BLoC
-      context.read<SimulationBloc>().add(
-        CreateSimulationEvent(
-          farmName: _farmNameController.text.trim(),
-          plantType: _plantTypeController.text.trim(),
-          soilType: _selectedSoilType,
-          plantArea: _farmAreaController.text.trim(),
-          plantingdate: _selectedDate.toString(),
-          location: _selectedRegion!.nameMm,
-          season: _seasonController.text.trim(),
-        ),
-      );
-
-      // Show loading feedback
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Creating simulation...'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    }
+    context.read<SimulationBloc>().add(
+      CreateSimulationEvent(
+        farmName: _farmNameController.text.trim(),
+        plantType: _plantTypeController.text.trim(),
+        soilType: _selectedSoilType,
+        plantArea: _farmAreaController.text.trim(),
+        plantingdate: plantingDate,
+        location: _selectedRegion!.nameMm,
+        season: _seasonController.text.trim(),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final horizontalPadding = width < 360 ? 16.0 : 24.0;
+
     return Scaffold(
       body: BlocConsumer<SimulationBloc, SimulationState>(
+        listenWhen: (previous, current) =>
+            current is CreateSimulationSuccess ||
+            current is CreateSimulationFailure,
         listener: (context, state) {
-          if (state is SimulationLoaded) {
+          if (state is CreateSimulationSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('✅ Simulation created successfully!'),
+              const SnackBar(
+                content: Text('✅ Simulation created successfully!'),
                 backgroundColor: Colors.green,
-                duration: const Duration(seconds: 3),
+                duration: Duration(seconds: 3),
               ),
             );
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) =>
-                    SimulationSuccessScreen(simulation: state.farmSimulation),
+                builder: (context) => SimulationSuccessScreen(
+                  simulation: state.farmSimulation,
+                ),
               ),
             );
-          } else if (state is SimulationLoadedError) {
+          } else if (state is CreateSimulationFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('❌ ${state.message.message}'),
@@ -152,9 +158,13 @@ class _SimulationScreenState extends State<SimulationScreen> {
             );
           }
         },
+        buildWhen: (previous, current) =>
+            current is SimulationInitial ||
+            current is CreateSimulationLoading ||
+            current is CreateSimulationSuccess ||
+            current is CreateSimulationFailure,
         builder: (context, state) {
-          debugPrint("State : $state");
-          if (state is SimulationLoading) {
+          if (state is CreateSimulationLoading) {
             return const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -169,37 +179,19 @@ class _SimulationScreenState extends State<SimulationScreen> {
               ),
             );
           }
-          if (state is SimulationLoadedError) {
-            return Center(
-              child: Column(
-                children: [
-                  Text("Error ${state.message.message}"),
-                  IconButton(
-                    onPressed: () async {
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(builder: (context) => MainHome()),
-                        (route) => false,
-                      );
-                    },
-                    icon: FaIcon(FontAwesomeIcons.refresh),
-                  ),
-                ],
-              ),
-            );
-          }
 
-          if (state is SimulationLoaded) {
+          if (state is CreateSimulationSuccess) {
             return _buildSuccessScreen(state);
           }
 
-          return _buildFormScreen();
+          // Keep form visible on create failure (snackbar already shown).
+          return _buildFormScreen(horizontalPadding: horizontalPadding);
         },
       ),
     );
   }
 
-  Widget _buildFormScreen() {
+  Widget _buildFormScreen({double horizontalPadding = 24}) {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -210,15 +202,14 @@ class _SimulationScreenState extends State<SimulationScreen> {
       ),
       child: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+          padding: EdgeInsets.all(horizontalPadding),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header
                 _buildHeader(),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
                 RegionDropdown(
                   label: 'တိုင်းဒေသကြီး/ပြည်နယ်',
                   hintText: 'ကျေးဇူးပြု၍ ရွေးချယ်ပါ',
@@ -226,14 +217,15 @@ class _SimulationScreenState extends State<SimulationScreen> {
                   onChanged: (Region? region) {
                     setState(() {
                       _selectedRegion = region;
-                      _locationError = null; // Error ကိုရှင်းပါ
+                      _selectedSoilType = '';
+                      _locationError = null;
+                      _soilTypeError = null;
                     });
                   },
                   isRequired: true,
                   errorText: _locationError,
                 ),
-                const SizedBox(height: 20),
-                // Farm Name Field
+                const SizedBox(height: 16),
                 _buildTextField(
                   controller: _farmNameController,
                   focusNode: _farmNameFocus,
@@ -244,14 +236,14 @@ class _SimulationScreenState extends State<SimulationScreen> {
                     if (value == null || value.trim().isEmpty) {
                       return 'စိုက်ခင်းအမည် ရေးပေးပါ';
                     }
+                    if (value.trim().length < 2) {
+                      return 'အမည် အနည်းဆုံး ၂ လုံးရေးပါ';
+                    }
                     return null;
                   },
                   onFieldSubmitted: (_) => _plantTypeFocus.requestFocus(),
                 ),
-                const SizedBox(height: 20),
-
-                const SizedBox(height: 20),
-                // Plant Type Field
+                const SizedBox(height: 16),
                 _buildTextField(
                   controller: _plantTypeController,
                   focusNode: _plantTypeFocus,
@@ -260,40 +252,34 @@ class _SimulationScreenState extends State<SimulationScreen> {
                   icon: Icons.grass,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Please enter plant type';
+                      return 'အပင်အမျိုးအစား ရေးပေးပါ';
                     }
                     return null;
                   },
-                  onFieldSubmitted: (_) => _soilTypeFocus.requestFocus(),
+                  onFieldSubmitted: (_) => _seasonFocus.requestFocus(),
                 ),
-                const SizedBox(height: 20),
-
-                //Season Type Text Field
+                const SizedBox(height: 16),
                 _buildTextField(
                   controller: _seasonController,
                   focusNode: _seasonFocus,
                   label: 'ရာသီဥတု',
                   hint: 'e.g. မိုးရာသီ,ဆောင်းရာသီ,နွေရာသီ',
-                  icon: Icons.ramen_dining,
+                  icon: Icons.wb_sunny_outlined,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'လက်ရှိရာသီဥတုကိုရေးပေးပါ။';
                     }
                     return null;
                   },
-                  onFieldSubmitted: (_) => _seasonFocus.requestFocus(),
+                  onFieldSubmitted: (_) => _farmAreaFocus.requestFocus(),
                 ),
-                const SizedBox(height: 20),
-
-                // Soil Type Field
-                //
+                const SizedBox(height: 16),
                 SoilTypeDropdown(
                   label: 'မြေအမျိုးအစား',
                   hintText: 'သင့်တော်သော မြေအမျိုးအစားကို ရွေးပါ',
                   selectedRegion: _selectedRegion,
-                  selectedSoilType: _selectedSoilType, // ✅ String
+                  selectedSoilType: _selectedSoilType,
                   onChanged: (String soilType) {
-                    // ✅ String လက်ခံမယ်
                     setState(() {
                       _selectedSoilType = soilType;
                       _soilTypeError = null;
@@ -302,39 +288,38 @@ class _SimulationScreenState extends State<SimulationScreen> {
                   isRequired: true,
                   errorText: _soilTypeError,
                 ),
-                const SizedBox(height: 20),
-
-                // Farm Area Field
+                const SizedBox(height: 16),
                 _buildTextField(
                   controller: _farmAreaController,
                   focusNode: _farmAreaFocus,
                   label: 'စိုက်ခင်းအကျယ်',
-                  hint: 'စိုက်ခင်းအကျယ်',
+                  hint: 'ဧက အရေအတွက်',
                   icon: Icons.square_foot,
-                  keyboardType: TextInputType.number,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'စိုက်ခင်းအကျယ်ရေးပေးပါ';
                     }
-                    final area = double.tryParse(value.trim());
+                    final area = double.tryParse(
+                      value.trim().replaceAll(',', ''),
+                    );
                     if (area == null || area <= 0) {
-                      return 'Please enter a valid positive number';
+                      return 'မှန်ကန်သော ကိန်းဂဏန်း ရေးပေးပါ';
+                    }
+                    if (area > 100000) {
+                      return 'ဧရိယာ တန်ဖိုး များလွန်းနေပါသည်';
                     }
                     return null;
                   },
                   onFieldSubmitted: (_) => _selectDate(context),
                 ),
-                const SizedBox(height: 20),
-
-                // Planting Date Field
+                const SizedBox(height: 16),
                 _buildDatePicker(),
-                const SizedBox(height: 32),
-
-                // Submit Button
+                const SizedBox(height: 28),
                 _buildSubmitButton(),
                 const SizedBox(height: 16),
-
-                // Additional Info
                 _buildAdditionalInfo(),
               ],
             ),
@@ -377,7 +362,7 @@ class _SimulationScreenState extends State<SimulationScreen> {
                     const Text(
                       'Smart Farming Simulation',
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: Colors.black87,
                       ),
@@ -385,7 +370,7 @@ class _SimulationScreenState extends State<SimulationScreen> {
                     Text(
                       'သက်ဆိုင်ရာ အချက်အလက် များကိုဖြည့်ပါ။',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 13,
                         color: Colors.grey.shade600,
                       ),
                     ),
@@ -460,6 +445,8 @@ class _SimulationScreenState extends State<SimulationScreen> {
   }
 
   Widget _buildDatePicker() {
+    final isCompact = MediaQuery.sizeOf(context).width < 380;
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -497,20 +484,25 @@ class _SimulationScreenState extends State<SimulationScreen> {
             filled: true,
             fillColor: Colors.grey.shade50,
             contentPadding: const EdgeInsets.symmetric(
-              horizontal: 5,
+              horizontal: 12,
               vertical: 16,
             ),
           ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                DateFormat('EEEE, MMMM d, yyyy').format(_selectedDate),
-                style: const TextStyle(fontSize: 10),
+              Expanded(
+                child: Text(
+                  DateFormat(
+                    isCompact ? 'MMM d, yyyy' : 'EEEE, MMMM d, yyyy',
+                  ).format(_selectedDate),
+                  style: TextStyle(fontSize: isCompact ? 13 : 14),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
+                  horizontal: 10,
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
@@ -518,11 +510,12 @@ class _SimulationScreenState extends State<SimulationScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.edit, size: 16, color: Colors.green.shade700),
+                    Icon(Icons.edit, size: 14, color: Colors.green.shade700),
                     const SizedBox(width: 4),
                     Text(
-                      'ရွေးချယ်ရန်',
+                      'ရွေးရန်',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.green.shade700,
@@ -556,12 +549,18 @@ class _SimulationScreenState extends State<SimulationScreen> {
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Icon(Icons.play_arrow, size: 24),
-            SizedBox(width: 8),
-            Text(
-              'ခန့်မှန်းချက်များထုတ်မည်',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          children: [
+            const Icon(Icons.play_arrow, size: 22),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                'ခန့်မှန်းချက်များထုတ်မည်',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: MediaQuery.sizeOf(context).width < 360 ? 15 : 17,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
           ],
         ),
@@ -596,7 +595,7 @@ class _SimulationScreenState extends State<SimulationScreen> {
     );
   }
 
-  Widget _buildSuccessScreen(SimulationLoaded state) {
+  Widget _buildSuccessScreen(CreateSimulationSuccess state) {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -669,11 +668,19 @@ class _SimulationScreenState extends State<SimulationScreen> {
                       const Divider(),
                       _buildInfoRow(
                         'စိုက်ပျိုးမည့်ရက်',
-                        DateFormat('MMM d, yyyy').format(
-                          DateTime.parse(
-                            state.farmSimulation.plantingDate.toString(),
-                          ),
-                        ),
+                        () {
+                          try {
+                            return DateFormat('MMM d, yyyy').format(
+                              DateTime.parse(
+                                state.farmSimulation.plantingDate.toString(),
+                              ),
+                            );
+                          } catch (_) {
+                            return state.farmSimulation.plantingDate
+                                    ?.toString() ??
+                                'N/A';
+                          }
+                        }(),
                       ),
                     ],
                   ),
@@ -684,10 +691,9 @@ class _SimulationScreenState extends State<SimulationScreen> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () {
-                          // // Reset to form
-                          // context.read<SimulationBloc>().add(
-                          //   ResetSimulationEvent(),
-                          // );
+                          context.read<SimulationBloc>().add(
+                            ResetSimulationEvent(),
+                          );
                           Navigator.pushAndRemoveUntil(
                             context,
                             MaterialPageRoute(builder: (context) => MainHome()),
@@ -750,96 +756,33 @@ class _SimulationScreenState extends State<SimulationScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade600,
-              fontWeight: FontWeight.w500,
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Colors.black87,
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+              textAlign: TextAlign.end,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
       ),
     );
   }
-
-  // void _showHelpDialog(BuildContext context) {
-  //   showDialog(
-  //     context: context,
-  //     builder: (context) => AlertDialog(
-  //       title: Row(
-  //         children: [
-  //           Icon(Icons.help_outline, color: Colors.green.shade700),
-  //           const SizedBox(width: 8),
-  //           const Text('How to Use'),
-  //         ],
-  //       ),
-  //       content: Column(
-  //         mainAxisSize: MainAxisSize.min,
-  //         crossAxisAlignment: CrossAxisAlignment.start,
-  //         children: [
-  //           _buildHelpItem(
-  //             '🌾 Farm Name',
-  //             'Give your farm a unique name for identification',
-  //           ),
-  //           const SizedBox(height: 12),
-  //           _buildHelpItem(
-  //             '🌱 Plant Type',
-  //             'Select the type of crop you want to simulate',
-  //           ),
-  //           const SizedBox(height: 12),
-  //           _buildHelpItem(
-  //             '🧪 Soil Type',
-  //             'Choose the soil type for accurate growth predictions',
-  //           ),
-  //           const SizedBox(height: 12),
-  //           _buildHelpItem(
-  //             '📐 Farm Area',
-  //             'Enter the size of your farm in acres',
-  //           ),
-  //           const SizedBox(height: 12),
-  //           _buildHelpItem(
-  //             '📅 Planting Date',
-  //             'Select when you plan to start planting',
-  //           ),
-  //         ],
-  //       ),
-  //       actions: [
-  //         TextButton(
-  //           onPressed: () => Navigator.pop(context),
-  //           child: const Text('Got it!'),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
-
-  // Widget _buildHelpItem(String title, String description) {
-  //   return Row(
-  //     crossAxisAlignment: CrossAxisAlignment.start,
-  //     children: [
-  //       Text(
-  //         title,
-  //         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-  //       ),
-  //       const SizedBox(width: 8),
-  //       Expanded(
-  //         child: Text(
-  //           description,
-  //           style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-  //         ),
-  //       ),
-  //     ],
-  //   );
-  // }
 }

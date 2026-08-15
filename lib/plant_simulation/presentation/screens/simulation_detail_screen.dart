@@ -16,70 +16,67 @@ class SimulationSuccessScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isCompact = MediaQuery.sizeOf(context).width < 380;
+
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text(
-          '🌾 စိုက်ပျိုးရေး ခန့်မှန်းချက်',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          isCompact ? 'ခန့်မှန်းချက်' : '🌾 စိုက်ပျိုးရေး ခန့်မှန်းချက်',
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
           IconButton(
-            onPressed: () {
-              _navigateToHome(context);
-            },
+            onPressed: () => _navigateToHome(context),
             icon: const Icon(Icons.home),
           ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(isCompact ? 12 : 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ✅ Success Header
             _buildSuccessHeader(context),
             const SizedBox(height: 16),
-
-            // ✅ Farm Details
             SimulationDetailCard(simulation: simulation),
             const SizedBox(height: 16),
-
-            // ✅ Summary Card (Yield, Income, Profit)
             SummaryCard(simulation: simulation),
             const SizedBox(height: 16),
-
             buildScheduleTasks(
               context: context,
               scheduleTasks: simulation.scheduleTasks,
-              plantingDate: simulation.createdAt!,
+              plantingDate:
+                  simulation.createdAt ??
+                  DateTime.tryParse(simulation.plantingDate ?? '') ??
+                  DateTime.now(),
             ),
             const SizedBox(height: 10),
-
-            //✅ Fertilizer Schedule
-            FertilizerScheduleCard(
-              schedule: simulation.recommendedFertilizerSchedule!,
-            ),
-            const SizedBox(height: 16),
-
-            // ✅ Cost Breakdown
-            CostBreakdownCard(costBreakdown: simulation.costBreakdown!),
-            const SizedBox(height: 16),
-            //Schedule Tasks
-
-            // ✅ Risk Factors
-            RiskFactorsCard(riskFactors: simulation.riskFactors!),
-            const SizedBox(height: 16),
-
-            // ✅ Recommendation
-            _buildRecommendationCard(simulation),
-            const SizedBox(height: 24),
-
-            // ✅ Action Buttons
-            _buildActionButtons(context),
+            if (simulation.recommendedFertilizerSchedule != null &&
+                simulation.recommendedFertilizerSchedule!.isNotEmpty) ...[
+              FertilizerScheduleCard(
+                schedule: simulation.recommendedFertilizerSchedule!,
+              ),
+              const SizedBox(height: 16),
+            ],
+            if (simulation.costBreakdown != null) ...[
+              CostBreakdownCard(costBreakdown: simulation.costBreakdown!),
+              const SizedBox(height: 16),
+            ],
+            if (simulation.riskFactors != null &&
+                simulation.riskFactors!.isNotEmpty) ...[
+              RiskFactorsCard(riskFactors: simulation.riskFactors!),
+              const SizedBox(height: 16),
+            ],
+            if (simulation.recommendation != null &&
+                simulation.recommendation!.trim().isNotEmpty) ...[
+              _buildRecommendationCard(simulation),
+              const SizedBox(height: 24),
+            ],
+            _buildActionButtons(context, isCompact: isCompact),
             const SizedBox(height: 16),
           ],
         ),
@@ -87,10 +84,11 @@ class SimulationSuccessScreen extends StatelessWidget {
     );
   }
 
-  // ============ Header ============
   Widget _buildSuccessHeader(BuildContext context) {
     return SafeArea(
+      bottom: false,
       child: Container(
+        width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
@@ -101,45 +99,20 @@ class SimulationSuccessScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.green.withOpacity(0.3),
+              color: Colors.green.withValues(alpha: 0.3),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
           ],
         ),
-        child: Row(
-          children: [
-            // Container(
-            //   padding: const EdgeInsets.all(12),
-            //   decoration: const BoxDecoration(
-            //     color: Colors.white,
-            //     shape: BoxShape.circle,
-            //   ),
-            //   child: const Icon(
-            //     Icons.check_circle,
-            //     color: Colors.green,
-            //     size: 32,
-            //   ),
-            // ),
-            const SizedBox(width: 30),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'သင်၏ စိုက်ပျိုးရေး ခန့်မှန်းချက်များ',
-                    style: TextStyle(color: Colors.white70, fontSize: 14),
-                  ),
-                ],
-              ),
-            ),
-          ],
+        child: const Text(
+          'သင်၏ စိုက်ပျိုးရေး ခန့်မှန်းချက်များ',
+          style: TextStyle(color: Colors.white, fontSize: 16),
         ),
       ),
     );
   }
 
-  // ============ Recommendation Card ============
   Widget _buildRecommendationCard(FarmSimulationEntity simulation) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -148,7 +121,7 @@ class SimulationSuccessScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -161,9 +134,11 @@ class SimulationSuccessScreen extends StatelessWidget {
             children: [
               Icon(Icons.lightbulb, color: Colors.orange, size: 24),
               SizedBox(width: 8),
-              Text(
-                '💡 စိုက်ပျိုးရေး အကြံပြုချက်များ',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              Expanded(
+                child: Text(
+                  '💡 စိုက်ပျိုးရေး အကြံပြုချက်များ',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
@@ -181,58 +156,60 @@ class SimulationSuccessScreen extends StatelessWidget {
     );
   }
 
-  // ============ Action Buttons ============
-  Widget _buildActionButtons(BuildContext context) {
+  Widget _buildActionButtons(BuildContext context, {required bool isCompact}) {
+    final homeButton = ElevatedButton.icon(
+      onPressed: () => _navigateToHome(context),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.green,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      icon: const Icon(Icons.home, color: Colors.white),
+      label: const Text(
+        'ပင်မစာမျက်နှာ',
+        style: TextStyle(
+          fontSize: 16,
+          color: Colors.white,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+
+    final shareButton = OutlinedButton.icon(
+      onPressed: () => _showShareDialog(context),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: Colors.green,
+        side: const BorderSide(color: Colors.green),
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      icon: const Icon(Icons.share),
+      label: const Text(
+        'မျှဝေမည်',
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+      ),
+    );
+
+    if (isCompact) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          homeButton,
+          const SizedBox(height: 12),
+          shareButton,
+        ],
+      );
+    }
+
     return Row(
       children: [
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: () => _navigateToHome(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            icon: const Icon(Icons.home, color: Colors.white),
-            label: const Text(
-              'ပင်မစာမျက်နှာ',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ),
+        Expanded(child: homeButton),
         const SizedBox(width: 12),
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: () {
-              // TODO: Share simulation result
-              _showShareDialog(context);
-            },
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.green,
-              side: const BorderSide(color: Colors.green),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            icon: const Icon(Icons.share),
-            label: const Text(
-              'မျှဝေမည်',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ),
+        Expanded(child: shareButton),
       ],
     );
   }
 
-  // ============ Navigation ============
   void _navigateToHome(BuildContext context) {
     Navigator.pushAndRemoveUntil(
       context,
@@ -241,7 +218,6 @@ class SimulationSuccessScreen extends StatelessWidget {
     );
   }
 
-  // ============ Share Dialog ============
   void _showShareDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -259,7 +235,6 @@ class SimulationSuccessScreen extends StatelessWidget {
           ElevatedButton.icon(
             onPressed: () {
               Navigator.pop(context);
-              // TODO: Share via WhatsApp
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
             icon: const Icon(Icons.person, color: Colors.white),

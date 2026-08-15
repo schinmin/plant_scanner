@@ -3,7 +3,7 @@ part of 'simulation_bloc.dart';
 @immutable
 sealed class SimulationEvent extends Equatable {
   @override
-  List<Object> get props => [];
+  List<Object?> get props => [];
 }
 
 class CreateSimulationEvent extends SimulationEvent {
@@ -14,6 +14,7 @@ class CreateSimulationEvent extends SimulationEvent {
   final String plantingdate;
   final String location;
   final String season;
+
   CreateSimulationEvent({
     required this.farmName,
     required this.plantType,
@@ -23,8 +24,23 @@ class CreateSimulationEvent extends SimulationEvent {
     required this.location,
     required this.season,
   });
+
+  @override
+  List<Object?> get props => [
+    farmName,
+    plantType,
+    soilType,
+    plantArea,
+    plantingdate,
+    location,
+    season,
+  ];
 }
 
 class GetSimulationEvent extends SimulationEvent {
   GetSimulationEvent();
+}
+
+class ResetSimulationEvent extends SimulationEvent {
+  ResetSimulationEvent();
 }

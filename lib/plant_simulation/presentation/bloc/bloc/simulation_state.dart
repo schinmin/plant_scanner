@@ -10,31 +10,45 @@ final class SimulationInitial extends SimulationState {
   SimulationInitial();
 }
 
-final class SimulationLoading extends SimulationState {
-  SimulationLoading();
+final class CreateSimulationLoading extends SimulationState {
+  CreateSimulationLoading();
 }
 
-final class SimulationLoaded extends SimulationState {
+final class CreateSimulationSuccess extends SimulationState {
   final FarmSimulationEntity farmSimulation;
 
-  SimulationLoaded({required this.farmSimulation});
+  CreateSimulationSuccess({required this.farmSimulation});
 
   @override
   List<Object?> get props => [farmSimulation];
 }
 
-class GetSimulationData extends SimulationState {
+final class CreateSimulationFailure extends SimulationState {
+  final Failure message;
+
+  CreateSimulationFailure({required this.message});
+
+  @override
+  List<Object?> get props => [message];
+}
+
+final class SimulationsListLoading extends SimulationState {
+  SimulationsListLoading();
+}
+
+final class SimulationsListLoaded extends SimulationState {
   final List<FarmSimulationEntity> farmSimulations;
-  GetSimulationData(this.farmSimulations);
+
+  SimulationsListLoaded(this.farmSimulations);
 
   @override
   List<Object?> get props => [farmSimulations];
 }
 
-final class SimulationLoadedError extends SimulationState {
+final class SimulationsListFailure extends SimulationState {
   final Failure message;
 
-  SimulationLoadedError({required this.message});
+  SimulationsListFailure({required this.message});
 
   @override
   List<Object?> get props => [message];

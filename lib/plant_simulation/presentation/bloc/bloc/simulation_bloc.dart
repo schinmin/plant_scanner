@@ -10,16 +10,18 @@ part 'simulation_state.dart';
 
 class SimulationBloc extends Bloc<SimulationEvent, SimulationState> {
   final SimulationUsecase simulationUsecase;
+
   SimulationBloc(this.simulationUsecase) : super(SimulationInitial()) {
     on<CreateSimulationEvent>(_onCreateSimulation);
     on<GetSimulationEvent>(_onGetSimulation);
+    on<ResetSimulationEvent>(_onResetSimulation);
   }
 
   Future<void> _onCreateSimulation(
     CreateSimulationEvent event,
     Emitter<SimulationState> emit,
   ) async {
-    emit(SimulationLoading());
+    emit(CreateSimulationLoading());
 
     try {
       final simulation = await simulationUsecase.createSimulation(
@@ -31,31 +33,40 @@ class SimulationBloc extends Bloc<SimulationEvent, SimulationState> {
         location: event.location,
         season: event.season,
       );
-      simulation.fold(
-        (failure) => emit(SimulationLoadedError(message: Failure("$failure"))),
 
-        (simulation) => emit(SimulationLoaded(farmSimulation: simulation)),
+      simulation.fold(
+        (failure) => emit(CreateSimulationFailure(message: failure)),
+        (result) => emit(CreateSimulationSuccess(farmSimulation: result)),
       );
     } catch (e) {
-      emit(SimulationLoadedError(message: Failure("Error : ${e.toString()}")));
+      emit(CreateSimulationFailure(message: Failure('Error : ${e.toString()}')));
     }
   }
 
-  ////GetSimulation
-  ///
   Future<void> _onGetSimulation(
     GetSimulationEvent event,
     Emitter<SimulationState> emit,
   ) async {
+    emit(SimulationsListLoading());
+
     try {
       final result = await simulationUsecase.getSimulation();
 
       result.fold(
-        (error) => emit(SimulationLoadedError(message: error)),
-        (result) => emit(GetSimulationData(result)),
+        (error) => emit(SimulationsListFailure(message: error)),
+        (simulations) => emit(SimulationsListLoaded(simulations)),
       );
     } catch (e) {
-      emit(SimulationLoadedError(message: Failure("Error ${e.toString()}")));
+      emit(
+        SimulationsListFailure(message: Failure('Error ${e.toString()}')),
+      );
     }
+  }
+
+  void _onResetSimulation(
+    ResetSimulationEvent event,
+    Emitter<SimulationState> emit,
+  ) {
+    emit(SimulationInitial());
   }
 }

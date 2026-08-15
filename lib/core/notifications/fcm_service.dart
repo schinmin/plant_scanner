@@ -12,15 +12,22 @@ class FCMService {
       sound: true,
     );
 
-    debugPrint("Authorization Status : ${settings.authorizationStatus}");
+    debugPrint('Authorization Status : ${settings.authorizationStatus}');
+
+    _firebaseMessaging.onTokenRefresh.listen((token) async {
+      if (token.isNotEmpty) {
+        await localStorageService.saveFcmToken(token);
+        debugPrint('FCM token refreshed and saved');
+      }
+    });
 
     final token = await _firebaseMessaging.getToken();
 
-    if (token != null && token == "") {
+    if (token != null && token.isNotEmpty) {
       await localStorageService.saveFcmToken(token);
     }
 
-    debugPrint("FCM TOKEN : $token");
+    debugPrint('FCM TOKEN : $token');
     return token;
   }
 }

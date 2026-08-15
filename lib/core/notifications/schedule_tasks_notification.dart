@@ -1,6 +1,6 @@
-// lib/plant_simulation/services/schedule_task_notification_service.dart
+// lib/core/notifications/schedule_tasks_notification.dart
 
-import 'package:flutter/widgets.dart';
+import 'package:flutter/foundation.dart';
 import 'package:plant_scanner_app/core/notifications/local_notification_service.dart';
 import 'package:plant_scanner_app/plant_simulation/data/models/schedule_task_model.dart';
 
@@ -10,71 +10,40 @@ class ScheduleTaskNotificationService {
   ScheduleTaskNotificationService({NotificationService? notificationService})
     : _notificationService = notificationService ?? NotificationService();
 
-  /// ✅ Simulation ရဲ့ schedule_tasks တွေကို notification schedule လုပ်ခြင်း
-  Future<void> scheduleTasksNotifications(List<ScheduleTaskModel> tasks) async {
+  /// Returns how many notifications were successfully scheduled.
+  Future<int> scheduleTasksNotifications(List<ScheduleTaskModel> tasks) async {
     if (tasks.isEmpty) {
-      print('📭 No schedule tasks found');
-      return;
+      debugPrint('No schedule tasks found');
+      return 0;
     }
 
-    print('📅 Scheduling ${tasks.length} tasks...');
+    debugPrint('Scheduling ${tasks.length} tasks...');
+    var scheduledCount = 0;
 
     for (final task in tasks) {
       final taskModel = ScheduleTaskModel.fromEntity(task);
-      await _scheduleSingleTaskNotification(task: taskModel);
+      final ok = await _scheduleSingleTaskNotification(task: taskModel);
+      if (ok) scheduledCount++;
     }
 
-    print('✅ All tasks scheduled successfully!');
+    debugPrint('Scheduled $scheduledCount / ${tasks.length} tasks');
+    return scheduledCount;
   }
 
-  /// Task တစ်ခုချင်းစီအတွက် notification schedule လုပ်ခြင်း
-  Future<void> _scheduleSingleTaskNotification({
+  Future<bool> _scheduleSingleTaskNotification({
     required ScheduleTaskModel task,
   }) async {
     try {
-      final now = DateTime.now();
+      final notificationTime = _resolveNotificationTime(task.scheduledDate);
 
-      final scheduledDate = DateTime.parse(task.scheduledDate);
-
-      bool shouldSkip = false;
-
-      // ဒီနေ့ဖြစ်ရင် hour/minute ပဲ စစ်မယ်
-      if (scheduledDate.year == now.year &&
-          scheduledDate.month == now.month &&
-          scheduledDate.day == now.day) {
-        final currentMinutes = now.hour * 60 + now.minute;
-        final scheduledMinutes = scheduledDate.hour * 60 + scheduledDate.minute;
-
-        if (scheduledMinutes <= currentMinutes) {
-          shouldSkip = true;
-        }
+      if (!notificationTime.isAfter(DateTime.now())) {
+        debugPrint('Skipping past task: ${task.taskTitle}');
+        return false;
       }
 
-      if (shouldSkip) {
-        debugPrint('⏭️ Skipping past task: ${task.taskTitle}');
-        return;
-      }
-
-      final date = DateTime.parse(task.scheduledDate);
-
-      // ၂. ရက်လွန်နေပြီဆိုရင် ကျော်ပါ
-
-      // ၃. မနက် ၉ နာရီ သတ်မှတ်ပါ
-      final DateTime notificationTime = DateTime(
-        date.year,
-        date.month,
-        date.day,
-        18, // မနက် ၉ နာရီ
-        30,
-        0,
-      );
-
-      // ၄. Task type ပေါ်မူတည်ပြီး icon နဲ့ label ရွေးပါ
       final taskData = _getTaskTypeData(task.taskType);
-
-      // ၅. Notification content ပြင်ဆင်ပါ
-      final String title = '${taskData['icon']} ${task.taskTitle}';
-      final String body =
+      final title = '${taskData['icon']} ${task.taskTitle}';
+      final body =
           '''
 📋 ${task.description}
 📅 ${_formatDate(notificationTime)}
@@ -82,27 +51,44 @@ class ScheduleTaskNotificationService {
 🌾 ${task.taskTitle}
 ''';
 
-      // ၆. Payload data ပြင်ဆင်ပါ
-      final payload = task.notificationId.toString();
-
-      // ၇. Notification schedule လုပ်ပါ
-      await _notificationService.scheduleTaskNotification(
+      final scheduled = await _notificationService.scheduleTaskNotification(
         id: task.notificationId,
         title: title,
         body: body,
         scheduledDate: notificationTime,
-        payloadData: payload,
+        payloadData: task.id.isNotEmpty ? task.id : task.notificationId.toString(),
       );
 
-      print('✅ Scheduled: ${task.taskTitle} (ID: ${task.notificationId})');
+      if (scheduled) {
+        debugPrint('Scheduled: ${task.taskTitle} (ID: ${task.notificationId})');
+      }
+      return scheduled;
     } catch (e) {
-      print('❌ Failed: ${task.taskTitle} - $e');
+      debugPrint('Failed: ${task.taskTitle} - $e');
+      return false;
     }
   }
 
-  /// Task type ပေါ်မူတည်ပြီး data ပြန်ပေးခြင်း
+  /// Uses the API datetime as-is. If only a date (midnight) is sent, default
+  /// to 09:00 local so farm reminders fire in the morning.
+  DateTime _resolveNotificationTime(String scheduledDateRaw) {
+    final parsed = DateTime.parse(scheduledDateRaw).toLocal();
+
+    final isDateOnly =
+        parsed.hour == 0 &&
+        parsed.minute == 0 &&
+        parsed.second == 0 &&
+        parsed.millisecond == 0;
+
+    if (isDateOnly) {
+      return DateTime(parsed.year, parsed.month, parsed.day, 9, 0);
+    }
+
+    return parsed;
+  }
+
   Map<String, String> _getTaskTypeData(String taskType) {
-    final Map<String, Map<String, String>> map = {
+    const map = {
       'Land Preparation': {'icon': '🚜', 'label': 'မြေပြင်ခြင်း'},
       'Fertilization': {'icon': '🌱', 'label': 'မြေဩဇာကျွေးခြင်း'},
       'Irrigation': {'icon': '💧', 'label': 'ရေသွင်းခြင်း'},
@@ -114,9 +100,8 @@ class ScheduleTaskNotificationService {
     return map[taskType] ?? map['GENERAL']!;
   }
 
-  /// ရက်စွဲကို မြန်မာလိုဖော်မတ်ပြုလုပ်ခြင်း
   String _formatDate(DateTime date) {
-    final months = [
+    const months = [
       'ဇန်နဝါရီ',
       'ဖေဖော်ဝါရီ',
       'မတ်',
@@ -131,18 +116,17 @@ class ScheduleTaskNotificationService {
       'ဒီဇင်ဘာ',
     ];
 
-    // နာရီကို ၁၂ နာရီပုံစံပြောင်းပါ
-    int hour = date.hour;
-    String amPm = hour >= 12 ? 'နေ့လည်' : 'မနက်';
+    var hour = date.hour;
+    final amPm = hour >= 12 ? 'နေ့လည်' : 'မနက်';
     if (hour > 12) hour -= 12;
     if (hour == 0) hour = 12;
 
-    return '${date.day} ${months[date.month - 1]} ${date.year}, $amPm $hour:${date.minute.toString().padLeft(2, '0')}';
+    return '${date.day} ${months[date.month - 1]} ${date.year}, '
+        '$amPm $hour:${date.minute.toString().padLeft(2, '0')}';
   }
 
-  /// ✅ Notification အားလုံးကို ပယ်ဖျက်ခြင်း
   Future<void> cancelAllNotifications() async {
     await _notificationService.cancelAllNotifications();
-    print('🗑️ All notifications cancelled');
+    debugPrint('All notifications cancelled');
   }
 }

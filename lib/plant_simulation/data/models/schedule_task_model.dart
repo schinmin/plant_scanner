@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:plant_scanner_app/plant_simulation/domain/entity/schedule_task_entity.dart';
 
 class ScheduleTaskModel extends ScheduleTaskEntity {
@@ -33,12 +32,23 @@ class ScheduleTaskModel extends ScheduleTaskEntity {
     );
   }
 
-  // ✅ DB ID ကို notification ID အဖြစ် သုံးပါ
+  /// Stable 32-bit notification id derived from Mongo `_id` hex when possible.
   int get notificationId {
-    int id = this.id.hashCode.abs();
-    if (id < 0) id = -id;
-    if (id == 0) id = 1;
-    if (id > 2147483647) id = id % 2147483647 + 1;
-    return id;
+    if (id.isNotEmpty) {
+      final hex = id.replaceAll(RegExp(r'[^0-9a-fA-F]'), '');
+      if (hex.length >= 8) {
+        try {
+          final parsed = int.parse(hex.substring(hex.length - 8), radix: 16);
+          final normalized = parsed & 0x7FFFFFFF;
+          return normalized == 0 ? 1 : normalized;
+        } catch (_) {
+          // Fall through to Object.hash
+        }
+      }
+    }
+
+    final hashed =
+        Object.hash(id, scheduledDate, taskTitle, taskType) & 0x7FFFFFFF;
+    return hashed == 0 ? 1 : hashed;
   }
 }
