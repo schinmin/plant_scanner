@@ -1,7 +1,6 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 
-import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:get_it/get_it.dart';
 import 'package:plant_scanner_app/auth/data/datasources/auth_datasources.dart';
 import 'package:plant_scanner_app/auth/data/repository/auth_repository_impl.dart';
@@ -39,9 +38,6 @@ Future<void> initDependencies() async {
   _initAuthModule();
   _initPlantScanModule();
   _initPlantSimulationModule();
-
-  // Remove splash screen
-  FlutterNativeSplash.remove();
 }
 
 /// Core module (network, dio, etc.)
@@ -54,16 +50,6 @@ void _initCoreModule() {
   sl.registerLazySingleton<ApiService>(() => ApiService());
 
   sl.registerLazySingleton<NetworkInfo>(() => NetworkInfoImpl(sl()));
-
-  // Add interceptors if needed
-  sl<Dio>().interceptors.addAll([
-    LogInterceptor(
-      request: true,
-      requestBody: true,
-      responseBody: true,
-      error: true,
-    ),
-  ]);
 }
 
 /// Auth module

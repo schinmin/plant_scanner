@@ -35,8 +35,6 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   void _register() {
-    debugPrint("Register Action");
-    debugPrint("Name : ${_nameController.text}");
     if (_formKey.currentState!.validate()) {
       context.read<AuthBloc>().add(
         RegisterRequest(
@@ -63,11 +61,7 @@ class _RegisterPageState extends State<RegisterPage> {
         child: SafeArea(
           child: BlocConsumer<AuthBloc, AuthState>(
             listener: (context, state) {
-              debugPrint("Auth State Changed: $state");
               if (state is AuthError) {
-                debugPrint(
-                  "Error Registeration : ${state.failure.message.runtimeType}",
-                );
                 _showErrorDialog(context, state.failure.message);
               } else if (state is AuthRegisterSuccess) {
                 _showSuccessDialog(context, state);

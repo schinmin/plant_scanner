@@ -1,47 +1,49 @@
-// Manual debug helper — do not call from production main().
 import 'package:flutter/foundation.dart';
 import 'package:plant_scanner_app/core/notifications/local_notification_service.dart';
-import 'package:plant_scanner_app/core/notifications/schedule_tasks_notification.dart';
-import 'package:plant_scanner_app/plant_simulation/data/models/schedule_task_model.dart';
 
 class QuickTest {
-  static Future<void> runQuickTest() async {
-    debugPrint('Starting notification Quick Test...');
+  static const int _notificationId = 900001;
+  static const Duration defaultDelay = Duration(seconds: 10);
 
-    final notificationService = NotificationService();
-    await notificationService.initNotification();
+  /// Schedules one debug notification relative to the current time.
+  ///
+  /// The stable ID replaces an older app-start test instead of accumulating
+  /// pending notifications after every launch.
+  static Future<bool> runOnAppStart({
+    NotificationService? notificationService,
+    Duration delay = defaultDelay,
+  }) async {
+    if (delay <= Duration.zero) {
+      debugPrint(
+        'App-start notification test skipped: delay must be positive.',
+      );
+      return false;
+    }
 
-    final service = ScheduleTaskNotificationService(
-      notificationService: notificationService,
-    );
+    final service = notificationService ?? NotificationService();
 
-    final pending = await notificationService.getPendingNotifications();
-    debugPrint('Existing pending notifications: ${pending.length}');
+    try {
+      await service.initNotification();
 
-    final testTask = ScheduleTaskModel(
-      id: 'quick_test_${DateTime.now().millisecondsSinceEpoch}',
-      taskTitle: 'Quick Test Notification',
-      description: 'This is a quick test notification',
-      taskType: 'GENERAL',
-      // Non-midnight time so scheduler does not rewrite to 09:00.
-      scheduledDate: DateTime.now()
-          .add(const Duration(seconds: 15))
-          .toIso8601String(),
-      dayAfterPlanting: '0',
-    );
+      final scheduledAt = DateTime.now().add(delay);
+      final scheduled = await service.scheduleTaskNotification(
+        id: _notificationId,
+        title: 'Notification Test',
+        body: 'The app-start notification test is working.',
+        scheduledDate: scheduledAt,
+        payloadData: 'app_start_notification_test',
+      );
 
-    debugPrint('Scheduling test task for ~15 seconds later...');
-    final count = await service.scheduleTasksNotifications([testTask]);
-    debugPrint('Test scheduled count: $count');
+      debugPrint(
+        'App-start notification test ${scheduled ? 'scheduled' : 'skipped'} '
+        'for $scheduledAt.',
+      );
 
-    await Future<void>.delayed(const Duration(seconds: 2));
-    final updatedPending = await notificationService.getPendingNotifications();
-    debugPrint(
-      'Pending notifications after scheduling: ${updatedPending.length}',
-    );
-
-    for (final notification in updatedPending) {
-      debugPrint('ID: ${notification.id}, Title: ${notification.title}');
+      return scheduled;
+    } catch (error, stackTrace) {
+      debugPrint('App-start notification test failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      return false;
     }
   }
 }

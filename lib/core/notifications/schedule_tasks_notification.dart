@@ -37,7 +37,7 @@ class ScheduleTaskNotificationService {
       final notificationTime = _resolveNotificationTime(task.scheduledDate);
 
       if (!notificationTime.isAfter(DateTime.now())) {
-        debugPrint('Skipping past task: ${task.taskTitle}');
+        debugPrint('Skipping a past schedule task');
         return false;
       }
 
@@ -56,15 +56,17 @@ class ScheduleTaskNotificationService {
         title: title,
         body: body,
         scheduledDate: notificationTime,
-        payloadData: task.id.isNotEmpty ? task.id : task.notificationId.toString(),
+        payloadData: task.id.isNotEmpty
+            ? task.id
+            : task.notificationId.toString(),
       );
 
       if (scheduled) {
-        debugPrint('Scheduled: ${task.taskTitle} (ID: ${task.notificationId})');
+        debugPrint('Scheduled a task notification');
       }
       return scheduled;
-    } catch (e) {
-      debugPrint('Failed: ${task.taskTitle} - $e');
+    } catch (_) {
+      debugPrint('Could not schedule a task notification');
       return false;
     }
   }

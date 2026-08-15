@@ -1,5 +1,4 @@
 import 'package:dartz/dartz.dart';
-import 'package:flutter/material.dart';
 import 'package:plant_scanner_app/auth/data/models/user_model.dart';
 import 'package:plant_scanner_app/core/database/shared_prefercences.dart';
 import 'package:plant_scanner_app/core/error/failure.dart';
@@ -47,7 +46,6 @@ class AuthDatasourcesImpl implements AuthDatasources {
 
         if (response.data['token'] != null) {
           final token = response.data['token'];
-          debugPrint("TOKEN : $token");
           await localStorageService.saveToken(token);
         }
 
@@ -81,7 +79,6 @@ class AuthDatasourcesImpl implements AuthDatasources {
 
         if (response.data['token'] != null) {
           final token = response.data['token'];
-          debugPrint("TOKEN : $token");
           await localStorageService.saveToken(token);
         }
 

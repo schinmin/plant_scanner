@@ -20,6 +20,8 @@ abstract class SimulationDatasources {
   });
 
   Future<Either<Failure, List<FarmSimulationModel>>> getSimulation();
+
+  Future<Either<Failure, Unit>> deleteSimulation(String id);
 }
 
 class SimulationDataSourceImpl implements SimulationDatasources {
@@ -39,7 +41,9 @@ class SimulationDataSourceImpl implements SimulationDatasources {
   }) async {
     try {
       final token = await localStorageService.getFcmToken();
-      final farmAreaValue = double.tryParse(plantArea.replaceAll(',', '').trim());
+      final farmAreaValue = double.tryParse(
+        plantArea.replaceAll(',', '').trim(),
+      );
       final normalizedDate = _normalizePlantingDate(plantingDate);
 
       if (farmAreaValue == null || farmAreaValue <= 0) {
@@ -60,17 +64,10 @@ class SimulationDataSourceImpl implements SimulationDatasources {
         data['device_token'] = token;
       }
 
-      debugPrint('========== SIMULATION REQUEST ==========');
-      debugPrint('DATA: $data');
-
       final response = await apiService.dio.post(
         createSimulationEndPoint,
         data: data,
       );
-
-      debugPrint('========== SIMULATION RESPONSE ==========');
-      debugPrint('STATUS CODE: ${response.statusCode}');
-      debugPrint('DATA: ${response.data}');
 
       if (response.data['success'] == true) {
         final responseSimulation = response.data['data'];
@@ -83,12 +80,10 @@ class SimulationDataSourceImpl implements SimulationDatasources {
       final message = response.data['message']?.toString();
       return Left(Failure(message ?? 'Simulation request failed'));
     } on DioException catch (e, stackTrace) {
-      debugPrint('========== DIO ERROR ==========');
-      debugPrint('TYPE: ${e.type}');
-      debugPrint('MESSAGE: ${e.message}');
-      debugPrint('STATUS: ${e.response?.statusCode}');
-      debugPrint('RESPONSE: ${e.response?.data}');
-      debugPrint('STACKTRACE: $stackTrace');
+      debugPrint(
+        'Simulation request failed: ${e.type} ${e.response?.statusCode}',
+      );
+      debugPrintStack(stackTrace: stackTrace);
 
       return Left(
         Failure(
@@ -98,9 +93,8 @@ class SimulationDataSourceImpl implements SimulationDatasources {
         ),
       );
     } catch (e, stackTrace) {
-      debugPrint('========== UNKNOWN ERROR ==========');
-      debugPrint('ERROR: $e');
-      debugPrint('STACKTRACE: $stackTrace');
+      debugPrint('Simulation request failed unexpectedly');
+      debugPrintStack(stackTrace: stackTrace);
       return Left(Failure(e.toString()));
     }
   }
@@ -124,12 +118,43 @@ class SimulationDataSourceImpl implements SimulationDatasources {
         return Right(simulations);
       }
 
-      return Left(
-        Failure('Error Datasources : ${response.data['message']}'),
-      );
+      return Left(Failure('Error Datasources : ${response.data['message']}'));
     } catch (e, stackTrace) {
-      debugPrint('Error ${e.toString()} StackTrace : ${stackTrace.toString()}');
+      debugPrint('Fetching simulations failed unexpectedly');
+      debugPrintStack(stackTrace: stackTrace);
       return Left(Failure('Error Data ${e.toString()}'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> deleteSimulation(String id) async {
+    try {
+      final response = await apiService.dio.delete('simulation/$id');
+      final isSuccessfulStatus =
+          response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 300;
+      final responseData = response.data;
+      final reportsFailure =
+          responseData is Map<String, dynamic> &&
+          responseData['success'] == false;
+
+      if (isSuccessfulStatus && !reportsFailure) {
+        return const Right(unit);
+      }
+
+      final message = responseData is Map<String, dynamic>
+          ? responseData['message']?.toString()
+          : null;
+      return Left(Failure(message ?? 'Could not delete simulation'));
+    } on DioException catch (e) {
+      final responseData = e.response?.data;
+      final message = responseData is Map<String, dynamic>
+          ? responseData['message']?.toString()
+          : null;
+      return Left(Failure(message ?? 'Could not delete simulation'));
+    } catch (_) {
+      return Left(Failure('Could not delete simulation'));
     }
   }
 

@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:plant_scanner_app/plant_scan/data/models/ai_response_model.dart';
 import 'package:plant_scanner_app/plant_scan/domain/entity/ai_response.dart';
 
@@ -24,18 +24,14 @@ class GetResponseDataSourceImpl extends GetResponseDataSource {
 
     try {
       final response = await dio.post(apiEndpoint, data: formData);
-      debugPrint('Data source received response: ${response.data}');
       return AiResponseModel.fromJson(response.data);
     } on DioException catch (e) {
       debugPrint(
-        'Error: ${e.response?.data}',
-      ); // This will show server error details
-      debugPrint('Status: ${e.response?.statusCode}');
-      debugPrint('Headers: ${e.response?.headers}');
-      debugPrint('Dio error: ${e.message}');
+        'Plant scan request failed: ${e.type} ${e.response?.statusCode}',
+      );
       throw Exception('Failed to get response: ${e.message}');
     } catch (e) {
-      debugPrint('Error in data source: $e');
+      debugPrint('Plant scan response could not be processed');
       throw Exception('Failed to get response: $e');
       // Handle exceptions
     }

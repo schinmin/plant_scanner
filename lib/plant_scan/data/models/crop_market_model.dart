@@ -3,11 +3,11 @@ import 'package:plant_scanner_app/plant_scan/domain/entity/crop_market.dart';
 
 @JsonSerializable()
 class CropMarketModel extends CropMarket {
-  CropMarketModel({
+  const CropMarketModel({
     required super.id,
     required super.name,
     required super.location,
-    required super.market_place,
+    required super.marketPlace,
     super.minPrice,
     super.maxPrice,
     super.currency,
@@ -17,17 +17,29 @@ class CropMarketModel extends CropMarket {
 
   factory CropMarketModel.fromJson(Map<String, dynamic> json) {
     return CropMarketModel(
-      id: json['_id'],
-      name: json['name'] as String,
-      location: json['location'] as String,
-      market_place: json['market_place'] ?? "",
-      minPrice: json['min_price'] ?? 0,
-      maxPrice: json['max_price'] ?? 0,
-      currency: json['currency'] as String,
-      unit: json['unit'] as String,
-      updatedAt: json['updatedAt'] == null
-          ? null
-          : DateTime.parse(json['updatedAt'] as String),
+      id: _asString(json['_id']),
+      name: _asString(json['name']),
+      location: _asString(json['location']),
+      marketPlace: _asString(json['market_place']),
+      minPrice: _asNullableString(json['min_price']),
+      maxPrice: _asNullableString(json['max_price']),
+      currency: _asNullableString(json['currency']),
+      unit: _asNullableString(json['unit']),
+      updatedAt: _asDateTime(json['updatedAt']),
     );
+  }
+
+  static String _asString(dynamic value) {
+    return value?.toString().trim() ?? '';
+  }
+
+  static String? _asNullableString(dynamic value) {
+    final normalized = value?.toString().trim();
+    return normalized == null || normalized.isEmpty ? null : normalized;
+  }
+
+  static DateTime? _asDateTime(dynamic value) {
+    final normalized = _asNullableString(value);
+    return normalized == null ? null : DateTime.tryParse(normalized);
   }
 }

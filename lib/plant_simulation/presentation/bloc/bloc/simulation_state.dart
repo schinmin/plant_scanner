@@ -53,3 +53,38 @@ final class SimulationsListFailure extends SimulationState {
   @override
   List<Object?> get props => [message];
 }
+
+final class SimulationDeleteInProgress extends SimulationState {
+  final String id;
+  final List<FarmSimulationEntity> farmSimulations;
+
+  SimulationDeleteInProgress({required this.id, required this.farmSimulations});
+
+  @override
+  List<Object?> get props => [id, farmSimulations];
+}
+
+final class SimulationDeleteSuccess extends SimulationState {
+  final String id;
+  final List<FarmSimulationEntity> farmSimulations;
+
+  SimulationDeleteSuccess({required this.id, required this.farmSimulations});
+
+  @override
+  List<Object?> get props => [id, farmSimulations];
+}
+
+final class SimulationDeleteFailure extends SimulationState {
+  final String id;
+  final Failure message;
+  final List<FarmSimulationEntity> farmSimulations;
+
+  SimulationDeleteFailure({
+    required this.id,
+    required this.message,
+    required this.farmSimulations,
+  });
+
+  @override
+  List<Object?> get props => [id, message, farmSimulations];
+}

@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/widgets.dart';
+import 'package:plant_scanner_app/core/constant/api_constant.dart';
 import 'package:plant_scanner_app/core/error/failure.dart';
 import 'package:plant_scanner_app/core/network/api_service.dart';
 import 'package:plant_scanner_app/plant_scan/data/models/crop_market_model.dart';
@@ -23,8 +23,6 @@ class GetCropMarket extends GetCropMarketDatasource {
     required String search,
   }) async {
     try {
-      //final dio = Dio();
-
       final Map<String, dynamic> queryParams = {"page": page, "limit": 10};
       if (search.trim().isNotEmpty) {
         queryParams['search'] = search.trim();
@@ -32,23 +30,47 @@ class GetCropMarket extends GetCropMarketDatasource {
         queryParams['search'] = "";
       }
       final response = await apiService.dio.get(
-        'https://argitech-production.up.railway.app/api/crop-prices',
+        cropMarketEndPoint,
         queryParameters: queryParams,
       );
-      debugPrint('Response: ${response.statusCode} ${response.data}');
-      if (response.statusCode == 200 && response.data['success'] == true) {
-        final List<dynamic> cropmarkets = response.data['data'];
-        debugPrint("Type of min and max respoo");
-        final List<CropMarketModel> cropPrices = cropmarkets
-            .map((crop) => CropMarketModel.fromJson(crop))
-            .toList();
+
+      final responseData = response.data;
+      if (response.statusCode == 200 &&
+          responseData is Map<String, dynamic> &&
+          responseData['success'] == true) {
+        final rawCropMarkets = responseData['data'];
+        if (rawCropMarkets is! List) {
+          return Left(Failure('Invalid crop price response'));
+        }
+
+        final cropPrices = <CropMarketModel>[];
+        for (final rawCropMarket in rawCropMarkets) {
+          if (rawCropMarket is! Map) continue;
+          try {
+            cropPrices.add(
+              CropMarketModel.fromJson(
+                Map<String, dynamic>.from(rawCropMarket),
+              ),
+            );
+          } catch (_) {
+            continue;
+          }
+        }
+
+        if (cropPrices.isEmpty && rawCropMarkets.isNotEmpty) {
+          return Left(Failure('Invalid crop price records'));
+        }
         return Right(cropPrices);
-      } else {
-        return Left(response.data['success']);
       }
-    } catch (e, stackTrace) {
-      debugPrint("Stack Trace : $stackTrace");
-      return Left(Failure("Server Error : ${e.toString()}"));
+
+      final message = responseData is Map<String, dynamic>
+          ? responseData['message']?.toString()
+          : null;
+      return Left(Failure(message ?? 'Could not load crop prices'));
+    } catch (_, stackTrace) {
+      debugPrint('Fetching crop prices failed unexpectedly');
+      debugPrintStack(stackTrace: stackTrace);
+      return Left(Failure('Could not load crop prices'));
     }
   }
 }

@@ -21,6 +21,7 @@ class MySimulationsScreen extends StatefulWidget {
 class _MySimulationsScreenState extends State<MySimulationsScreen> {
   late final ScheduleTaskNotificationService _notificationService;
   late final NotificationService _localNotificationService;
+  FarmSimulationEntity? _simulationPendingDeletion;
 
   @override
   void initState() {
@@ -38,8 +39,12 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF4F7F2),
       body: BlocConsumer<SimulationBloc, SimulationState>(
-        listenWhen: (previous, current) => current is SimulationsListFailure,
+        listenWhen: (previous, current) =>
+            current is SimulationsListFailure ||
+            current is SimulationDeleteSuccess ||
+            current is SimulationDeleteFailure,
         listener: (context, state) {
           if (state is SimulationsListFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -49,12 +54,19 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
                 duration: const Duration(seconds: 3),
               ),
             );
+          } else if (state is SimulationDeleteSuccess) {
+            _handleDeleteSuccess(state.id);
+          } else if (state is SimulationDeleteFailure) {
+            _handleDeleteFailure(state);
           }
         },
         buildWhen: (previous, current) =>
             current is SimulationsListLoading ||
             current is SimulationsListLoaded ||
             current is SimulationsListFailure ||
+            current is SimulationDeleteInProgress ||
+            current is SimulationDeleteSuccess ||
+            current is SimulationDeleteFailure ||
             current is SimulationInitial,
         builder: (context, state) {
           if (state is SimulationsListLoading || state is SimulationInitial) {
@@ -67,6 +79,22 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
             if (state.farmSimulations.isEmpty) {
               return _buildEmptyState(context);
             }
+            return _buildSimulationList(state.farmSimulations, context);
+          }
+          if (state is SimulationDeleteInProgress) {
+            return _buildSimulationList(
+              state.farmSimulations,
+              context,
+              deletingSimulationId: state.id,
+            );
+          }
+          if (state is SimulationDeleteSuccess) {
+            if (state.farmSimulations.isEmpty) {
+              return _buildEmptyState(context);
+            }
+            return _buildSimulationList(state.farmSimulations, context);
+          }
+          if (state is SimulationDeleteFailure) {
             return _buildSimulationList(state.farmSimulations, context);
           }
 
@@ -218,8 +246,9 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
 
   Widget _buildSimulationList(
     List<FarmSimulationEntity> simulations,
-    BuildContext context,
-  ) {
+    BuildContext context, {
+    String? deletingSimulationId,
+  }) {
     // schedule_tasks ရှိတဲ့ simulations တွေကိုပဲ ရွေးပါ
     final simulationsWithTasks = simulations
         .where((sim) => sim.scheduleTasks.isNotEmpty)
@@ -238,11 +267,15 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
 
           Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
               itemCount: simulations.length,
               itemBuilder: (context, index) {
                 final simulation = simulations[index];
-                return _buildSimulationCard(simulation, context);
+                return _buildSimulationCard(
+                  simulation,
+                  context,
+                  deletingSimulationId: deletingSimulationId,
+                );
               },
             ),
           ),
@@ -257,236 +290,256 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
 
   Widget _buildSimulationCard(
     FarmSimulationEntity simulation,
-    BuildContext context,
-  ) {
+    BuildContext context, {
+    String? deletingSimulationId,
+  }) {
     final hasTasks = simulation.scheduleTasks.isNotEmpty;
-    final isNarrow = MediaQuery.sizeOf(context).width < 380;
+
+    void openDetails() {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SimulationSuccessScreen(simulation: simulation),
+        ),
+      );
+    }
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE2EAE0)),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade200,
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: const Color(0xFF1B5E20).withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) =>
-                    SimulationSuccessScreen(simulation: simulation),
-              ),
-            );
-          },
-          borderRadius: BorderRadius.circular(16),
+          onTap: openDetails,
+          borderRadius: BorderRadius.circular(22),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    hasTasks
-                        ? ElevatedButton.icon(
-                            onPressed: () {
-                              _scheduleNotificationsForSimulation(simulation);
-                            },
-                            icon: const Icon(
-                              Icons.notifications_active,
-                              size: 18,
-                            ),
-                            label: const Text('Notification ပေးပါ'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue.shade700,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                          )
-                        : Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade200,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.notifications_off,
-                                  size: 16,
-                                  color: Colors.grey.shade600,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'No Tasks',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey.shade600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                    _buildInfoChip(
-                      icon: Icons.calendar_today,
-                      label: DateFormat(
-                        'y-MM-dd',
-                      ).format(simulation.createdAt ?? DateTime.now()),
-                    ),
-                  ],
-                ),
-
-                // Header with farm name and status
-                Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(10),
+                      width: 50,
+                      height: 50,
                       decoration: BoxDecoration(
-                        color: Colors.green.shade50,
-                        borderRadius: BorderRadius.circular(12),
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFF43A047), Color(0xFF1B5E20)],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                      child: Icon(
-                        Icons.agriculture,
-                        color: Colors.green.shade700,
-                        size: 24,
+                      child: const Icon(
+                        Icons.agriculture_rounded,
+                        color: Colors.white,
+                        size: 26,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            simulation.farmName ?? "",
+                            _displayValue(simulation.farmName, 'Unnamed farm'),
                             style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                              fontSize: 19,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF17211A),
+                              letterSpacing: -0.2,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          Text(
-                            simulation.riceType ?? "",
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey.shade600,
-                            ),
+                          const SizedBox(height: 3),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.grass_rounded,
+                                size: 15,
+                                color: Color(0xFF66806B),
+                              ),
+                              const SizedBox(width: 5),
+                              Expanded(
+                                child: Text(
+                                  _displayValue(
+                                    simulation.riceType,
+                                    'Crop not specified',
+                                  ),
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: Color(0xFF66806B),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
                     ),
-                    _buildStatusBadge(simulation),
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF1F6EF),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 18,
+                        color: Color(0xFF2E7D32),
+                      ),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
 
-                // Details row
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: [
+                    _buildStatusBadge(simulation),
                     _buildInfoChip(
-                      icon: Icons.landscape,
-                      label: simulation.soilType ?? '',
+                      icon: Icons.calendar_month_rounded,
+                      label: DateFormat(
+                        'dd MMM yyyy',
+                      ).format(simulation.createdAt ?? DateTime.now()),
+                    ),
+                    if (simulation.season?.trim().isNotEmpty == true)
+                      _buildInfoChip(
+                        icon: Icons.wb_sunny_outlined,
+                        label: simulation.season!,
+                      ),
+                    _buildInfoChip(
+                      icon: Icons.landscape_outlined,
+                      label: _displayValue(simulation.soilType, 'Unknown soil'),
                     ),
                     _buildInfoChip(
-                      icon: Icons.square_foot,
+                      icon: Icons.square_foot_rounded,
                       label:
                           '${simulation.farmArea?.toStringAsFixed(1) ?? '0'} acres',
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
 
-                // Divider
-                Divider(color: Colors.grey.shade200),
-                const SizedBox(height: 8),
-
-                // Financial summary
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 8,
-                  alignment: WrapAlignment.spaceBetween,
-                  children: [
-                    _buildFinancialInfo(
-                      'ကုန်ကျစရိတ်',
-                      simulation.totalEstimatedCost?.toString() ?? 'N/A',
-                      Colors.blue,
-                    ),
-                    _buildFinancialInfo(
-                      'ဝင်ငွေ',
-                      simulation.estimatedIncome?.toString() ?? 'N/A',
-                      Colors.green,
-                    ),
-                    _buildFinancialInfo(
-                      'ROI',
-                      simulation.roiPercentage != null
-                          ? '${simulation.roiPercentage!.toStringAsFixed(1)}%'
-                          : 'N/A',
-                      _isProfitable(simulation) ? Colors.green : Colors.red,
-                    ),
-                  ],
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF6F8F5),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _buildFinancialInfo(
+                          icon: Icons.payments_outlined,
+                          label: 'ကုန်ကျစရိတ်',
+                          value: _formatAmount(simulation.totalEstimatedCost),
+                          color: const Color(0xFF546E7A),
+                        ),
+                      ),
+                      _buildMetricDivider(),
+                      Expanded(
+                        child: _buildFinancialInfo(
+                          icon: Icons.account_balance_wallet_outlined,
+                          label: 'ဝင်ငွေ',
+                          value: _formatAmount(simulation.estimatedIncome),
+                          color: const Color(0xFF2E7D32),
+                        ),
+                      ),
+                      _buildMetricDivider(),
+                      Expanded(
+                        child: _buildFinancialInfo(
+                          icon: Icons.trending_up_rounded,
+                          label: 'ROI',
+                          value: simulation.roiPercentage != null
+                              ? '${simulation.roiPercentage!.toStringAsFixed(1)}%'
+                              : 'N/A',
+                          color: _isProfitable(simulation)
+                              ? const Color(0xFF2E7D32)
+                              : const Color(0xFFC62828),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
 
-                // Action buttons
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  alignment: isNarrow
-                      ? WrapAlignment.start
-                      : WrapAlignment.end,
+                  alignment: WrapAlignment.end,
                   children: [
-                    TextButton.icon(
-                      onPressed: () {
-                        _showDeleteConfirmation(context, simulation);
-                      },
-                      icon: const Icon(Icons.delete_outline, size: 18),
-                      label: const Text('Delete'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.red.shade700,
+                    if (hasTasks)
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          _scheduleNotificationsForSimulation(simulation);
+                        },
+                        icon: const Icon(
+                          Icons.notifications_active_outlined,
+                          size: 18,
+                        ),
+                        label: Text(
+                          'Notification (${simulation.scheduleTasks.length})',
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF2E7D32),
+                          side: const BorderSide(color: Color(0xFFB8D4B8)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      )
+                    else
+                      _buildInfoChip(
+                        icon: Icons.notifications_off_outlined,
+                        label: 'No tasks',
+                      ),
+                    IconButton(
+                      onPressed: deletingSimulationId == simulation.id
+                          ? null
+                          : () {
+                              _showDeleteConfirmation(context, simulation);
+                            },
+                      tooltip: 'Delete simulation',
+                      icon: deletingSimulationId == simulation.id
+                          ? const SizedBox.square(
+                              dimension: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.delete_outline_rounded, size: 20),
+                      color: const Color(0xFFC62828),
+                      style: IconButton.styleFrom(
+                        backgroundColor: const Color(0xFFFFEBEE),
                       ),
                     ),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => SimulationSuccessScreen(
-                              simulation: simulation,
-                            ),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.visibility, size: 18),
+                    FilledButton.icon(
+                      onPressed: openDetails,
+                      icon: const Icon(Icons.visibility_outlined, size: 18),
                       label: const Text('View Details'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green.shade700,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFF2E7D32),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),
@@ -512,7 +565,7 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
       await _promptExactAlarmIfNeeded();
 
       if (!mounted) return;
-      ScaffoldMessenger.of(this.context).showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Row(
             children: [
@@ -541,7 +594,7 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
 
       if (!mounted) return;
       final allSkipped = scheduledCount == 0 && scheduleTasks.isNotEmpty;
-      ScaffoldMessenger.of(this.context).showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
             children: [
@@ -563,22 +616,22 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
           duration: const Duration(seconds: 3),
         ),
       );
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(this.context).showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
             children: [
               const Icon(Icons.error, color: Colors.white),
               const SizedBox(width: 12),
-              Expanded(child: Text('❌ Failed: ${e.toString()}')),
+              const Expanded(child: Text('❌ Failed to schedule notifications')),
             ],
           ),
           backgroundColor: Colors.red,
           duration: const Duration(seconds: 4),
         ),
       );
-      debugPrint('Error scheduling notifications: $e');
+      debugPrint('Could not schedule simulation notifications');
     }
   }
 
@@ -587,7 +640,7 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
     await _localNotificationService.ensureExactAlarmPermissionWithPrompt(
       showRationaleDialog: () {
         return showDialog<bool>(
-          context: this.context,
+          context: context,
           builder: (dialogContext) => AlertDialog(
             title: const Text('Exact alarm permission'),
             content: const Text(
@@ -620,7 +673,7 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
     await _promptExactAlarmIfNeeded();
     if (!mounted) return;
 
-    ScaffoldMessenger.of(this.context).showSnackBar(
+    ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Row(
           children: [
@@ -648,14 +701,14 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
         totalNotifications += await _notificationService
             .scheduleTasksNotifications(models);
         successCount++;
-      } catch (e) {
+      } catch (_) {
         failCount++;
-        debugPrint('Failed for ${simulation.farmName}: $e');
+        debugPrint('Could not schedule notifications for a simulation');
       }
     }
 
     if (!mounted) return;
-    ScaffoldMessenger.of(this.context).showSnackBar(
+    ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           '✅ $successCount farms ($totalNotifications notifications), '
@@ -672,24 +725,24 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
     BuildContext context,
   ) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
       child: SizedBox(
         width: double.infinity,
-        child: ElevatedButton.icon(
+        child: FilledButton.icon(
           onPressed: () {
             _scheduleAllNotifications(simulationsWithTasks);
           },
-          icon: const Icon(Icons.notifications_active),
+          icon: const Icon(Icons.notifications_active_outlined),
           label: Text(
             'အားလုံး Notification ပေးပါ (${simulationsWithTasks.length})',
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.orange.shade700,
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF2E7D32),
             foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 14),
+            padding: const EdgeInsets.symmetric(vertical: 15),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(16),
             ),
           ),
         ),
@@ -716,84 +769,124 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
 
   Widget _buildStatusBadge(FarmSimulationEntity simulation) {
     final isProfitable = _isProfitable(simulation);
-    return Flexible(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: isProfitable ? Colors.green.shade100 : Colors.red.shade100,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isProfitable ? Icons.trending_up : Icons.trending_down,
-              size: 16,
-              color: isProfitable ? Colors.green.shade700 : Colors.red.shade700,
-            ),
-            const SizedBox(width: 4),
-            Flexible(
-              child: Text(
-                isProfitable
-                    ? 'မြတ်နိုင်သည့်စိုက်ခင်း'
-                    : 'အရှုံးပေါ် နိုင်သည့်စိုက်ခင်း',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: isProfitable
-                      ? Colors.green.shade700
-                      : Colors.red.shade700,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+    final foreground = isProfitable
+        ? const Color(0xFF1B5E20)
+        : const Color(0xFFB71C1C);
+    final background = isProfitable
+        ? const Color(0xFFE8F5E9)
+        : const Color(0xFFFFEBEE);
 
-  Widget _buildInfoChip({required IconData icon, required String label}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(16),
+        color: background,
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: Colors.grey.shade700),
-          const SizedBox(width: 4),
+          Icon(
+            isProfitable
+                ? Icons.trending_up_rounded
+                : Icons.trending_down_rounded,
+            size: 15,
+            color: foreground,
+          ),
+          const SizedBox(width: 5),
           Text(
-            label,
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
+            isProfitable ? 'အမြတ်ရနိုင်' : 'အရှုံးဖြစ်နိုင်',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: foreground,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildFinancialInfo(String label, String value, Color color) {
+  String _displayValue(String? value, String fallback) {
+    final trimmed = value?.trim();
+    return trimmed == null || trimmed.isEmpty ? fallback : trimmed;
+  }
+
+  String _formatAmount(num? value) {
+    if (value == null) return 'N/A';
+    return NumberFormat.compact().format(value);
+  }
+
+  Widget _buildMetricDivider() {
+    return Container(
+      width: 1,
+      height: 42,
+      margin: const EdgeInsets.symmetric(horizontal: 7),
+      color: const Color(0xFFDDE5DA),
+    );
+  }
+
+  Widget _buildInfoChip({required IconData icon, required String label}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F6EF),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: const Color(0xFF55745B)),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF4D6251),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFinancialInfo({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            color: Colors.grey.shade500,
-            fontWeight: FontWeight.w500,
-          ),
+        Row(
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 10,
+                  color: Color(0xFF718075),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 5),
         Text(
           value,
           style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
             color: color,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ],
     );
@@ -803,9 +896,18 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
     BuildContext context,
     FarmSimulationEntity simulation,
   ) {
+    final simulationId = simulation.id?.trim();
+    if (simulationId == null || simulationId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('This simulation cannot be deleted.')),
+      );
+      return;
+    }
+    final simulationBloc = context.read<SimulationBloc>();
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Delete Simulation'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -828,20 +930,61 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
-              // context.read<SimulationBloc>().add(
-              //   DeleteSimulationEvent(id: simulation.id),
-              // );
+              Navigator.pop(dialogContext);
+              _simulationPendingDeletion = simulation;
+              simulationBloc.add(DeleteSimulationEvent(id: simulationId));
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Delete'),
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _handleDeleteSuccess(String simulationId) async {
+    final deletedSimulation = _simulationPendingDeletion;
+    if (deletedSimulation?.id == simulationId) {
+      _simulationPendingDeletion = null;
+    }
+
+    if (deletedSimulation?.id == simulationId) {
+      for (final task in deletedSimulation!.scheduleTasks) {
+        final taskModel = ScheduleTaskModel.fromEntity(task);
+        try {
+          await _localNotificationService.cancelNotification(
+            taskModel.notificationId,
+          );
+        } catch (_) {
+          debugPrint('Could not cancel a deleted simulation reminder');
+        }
+      }
+    }
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Simulation deleted successfully.'),
+        backgroundColor: Colors.green,
+      ),
+    );
+    context.read<SimulationBloc>().add(GetSimulationEvent());
+  }
+
+  void _handleDeleteFailure(SimulationDeleteFailure state) {
+    if (!mounted) return;
+    if (_simulationPendingDeletion?.id == state.id) {
+      _simulationPendingDeletion = null;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(state.message.message),
+        backgroundColor: Colors.red,
       ),
     );
   }

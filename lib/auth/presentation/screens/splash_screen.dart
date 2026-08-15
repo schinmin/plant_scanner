@@ -62,8 +62,6 @@ class _SplashScreenState extends State<SplashScreen>
       // ✅ Check if user is logged in
       final token = await localStorageService.getUserToken();
 
-      debugPrint('SplashScreen: Retrieved token: $token');
-
       if (token != null && token.isNotEmpty) {
         // ✅ User is logged in - go to main home
         if (mounted) {
@@ -87,9 +85,9 @@ class _SplashScreenState extends State<SplashScreen>
           );
         }
       }
-    } catch (e) {
+    } catch (_) {
       // ✅ Error occurred - go to register
-      debugPrint('❌ SplashScreen error: $e');
+      debugPrint('SplashScreen could not restore the user session');
       if (mounted) {
         Navigator.pushReplacement(
           context,

@@ -1,5 +1,4 @@
 import 'package:dartz/dartz.dart';
-import 'package:flutter/material.dart';
 import 'package:plant_scanner_app/core/error/failure.dart';
 import 'package:plant_scanner_app/plant_scan/data/datasources/get_response_datasource.dart';
 import 'package:plant_scanner_app/plant_scan/domain/entity/ai_response.dart';
@@ -13,7 +12,6 @@ class GetDiseaseRepolImpl extends DiseaseRepository {
   Future<Either<Failure, AiResponse>> getResponse(String imagePath) async {
     try {
       final response = await dataSource.getResponse(imagePath);
-      debugPrint('Repository received response: $response');
       return Right(response);
     } catch (e) {
       return Left(Failure('Failed to get response: $e'));

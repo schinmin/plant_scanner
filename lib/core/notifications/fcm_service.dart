@@ -27,7 +27,6 @@ class FCMService {
       await localStorageService.saveFcmToken(token);
     }
 
-    debugPrint('FCM TOKEN : $token');
     return token;
   }
 }

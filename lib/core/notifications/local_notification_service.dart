@@ -114,9 +114,8 @@ class NotificationService {
     }
   }
 
-  void _onNotificationTap(NotificationResponse response) {
-    final String? payload = response.payload;
-    debugPrint('Notification tapped! Payload: $payload');
+  void _onNotificationTap(NotificationResponse _) {
+    debugPrint('Notification tapped');
   }
 
   Future<bool> checkExactAlarmPermission() async {
@@ -185,7 +184,7 @@ class NotificationService {
     }
 
     if (!scheduledDate.isAfter(DateTime.now())) {
-      debugPrint('Skipping past notification: $title');
+      debugPrint('Skipping a past notification');
       return false;
     }
 
@@ -230,7 +229,6 @@ class NotificationService {
     );
 
     debugPrint('Scheduling notification at: $tzScheduledDate');
-    debugPrint('ID: $finalId, Title: $title');
 
     await _notificationsPlugin.zonedSchedule(
       id: finalId,
@@ -252,8 +250,8 @@ class NotificationService {
     try {
       final pending = await _notificationsPlugin.pendingNotificationRequests();
       return pending.any((notification) => notification.id == id);
-    } catch (e) {
-      debugPrint('Error checking notification existence: $e');
+    } catch (_) {
+      debugPrint('Could not check whether the notification exists');
       return false;
     }
   }
@@ -265,8 +263,8 @@ class NotificationService {
   Future<List<PendingNotificationRequest>> getPendingNotifications() async {
     try {
       return await _notificationsPlugin.pendingNotificationRequests();
-    } catch (e) {
-      debugPrint('Error getting pending notifications: $e');
+    } catch (_) {
+      debugPrint('Could not load pending notifications');
       return [];
     }
   }
