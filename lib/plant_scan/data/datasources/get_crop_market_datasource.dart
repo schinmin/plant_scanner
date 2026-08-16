@@ -42,6 +42,7 @@ class GetCropMarket extends GetCropMarketDatasource {
         final List<CropMarketModel> cropPrices = cropmarkets
             .map((crop) => CropMarketModel.fromJson(crop))
             .toList();
+        debugPrint("Market_place ${cropPrices[1].marketPlace}");
         return Right(cropPrices);
       } else {
         return Left(response.data['success']);

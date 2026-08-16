@@ -35,4 +35,11 @@ class SimulationRepositoryImpl implements SimulationRepository {
   getFarmSimulation() async {
     return await simulationDataSource.getSimulation();
   }
+
+  @override
+  Future<Either<Failure, String>> deleteFarmSimulation({
+    required String id,
+  }) async {
+    return await simulationDataSource.deleteSimulation(id: id);
+  }
 }

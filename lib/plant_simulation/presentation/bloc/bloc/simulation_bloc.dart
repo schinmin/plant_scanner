@@ -14,6 +14,7 @@ class SimulationBloc extends Bloc<SimulationEvent, SimulationState> {
   SimulationBloc(this.simulationUsecase) : super(SimulationInitial()) {
     on<CreateSimulationEvent>(_onCreateSimulation);
     on<GetSimulationEvent>(_onGetSimulation);
+    on<DeleteSimulationEvent>(_onDeleteSimulation);
     on<ResetSimulationEvent>(_onResetSimulation);
   }
 
@@ -59,6 +60,29 @@ class SimulationBloc extends Bloc<SimulationEvent, SimulationState> {
     } catch (e) {
       emit(
         SimulationsListFailure(message: Failure('Error ${e.toString()}')),
+      );
+    }
+  }
+
+  Future<void> _onDeleteSimulation(
+    DeleteSimulationEvent event,
+    Emitter<SimulationState> emit,
+  ) async {
+    emit(DeleteSimulationLoading());
+
+    try {
+      final result = await simulationUsecase.deleteSimulation(id: event.id);
+
+      result.fold(
+        (failure) => emit(DeleteSimulationFailure(message: failure)),
+        (message) {
+          emit(DeleteSimulationSuccess(message: message));
+          add(GetSimulationEvent());
+        },
+      );
+    } catch (e) {
+      emit(
+        DeleteSimulationFailure(message: Failure('Error ${e.toString()}')),
       );
     }
   }

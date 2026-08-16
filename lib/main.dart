@@ -24,7 +24,9 @@ void main() async {
   debugPrint('Main FCM TOKEN : $token');
 
   // Single plugin instance — do not initialize FlutterLocalNotificationsPlugin again.
-  await NotificationService().initNotification();
+  final notificationService = NotificationService();
+  await notificationService.initNotification();
+  await notificationService.showTestNotification();
 
   await initDependencies();
   runApp(const MyApp());

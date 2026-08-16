@@ -4,7 +4,7 @@ class CropMarket extends Equatable {
   final String id;
   final String name;
   final String location;
-  final String market_place;
+  final String marketPlace;
   final String? minPrice;
   final String? maxPrice;
 
@@ -18,7 +18,7 @@ class CropMarket extends Equatable {
     required this.id,
     required this.name,
     required this.location,
-    required this.market_place,
+    required this.marketPlace,
     this.minPrice,
     this.maxPrice,
     this.currency,
@@ -31,6 +31,7 @@ class CropMarket extends Equatable {
     id,
     name,
     location,
+    marketPlace,
     minPrice,
     maxPrice,
     currency,

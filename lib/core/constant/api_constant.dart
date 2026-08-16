@@ -5,3 +5,5 @@ final String scanEndPoint = "scan";
 final String cropMarketEndPoint = "crop-prices";
 
 final String createSimulationEndPoint = "simulation";
+
+String deleteSimulationEndPoint(String id) => "simulation/$id";

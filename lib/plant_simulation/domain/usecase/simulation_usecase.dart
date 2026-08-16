@@ -31,4 +31,8 @@ class SimulationUsecase {
   Future<Either<Failure, List<FarmSimulationEntity>>> getSimulation() {
     return simulationRepository.getFarmSimulation();
   }
+
+  Future<Either<Failure, String>> deleteSimulation({required String id}) {
+    return simulationRepository.deleteFarmSimulation(id: id);
+  }
 }

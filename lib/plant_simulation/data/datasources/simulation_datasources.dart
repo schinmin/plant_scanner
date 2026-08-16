@@ -20,6 +20,8 @@ abstract class SimulationDatasources {
   });
 
   Future<Either<Failure, List<FarmSimulationModel>>> getSimulation();
+
+  Future<Either<Failure, String>> deleteSimulation({required String id});
 }
 
 class SimulationDataSourceImpl implements SimulationDatasources {
@@ -130,6 +132,54 @@ class SimulationDataSourceImpl implements SimulationDatasources {
     } catch (e, stackTrace) {
       debugPrint('Error ${e.toString()} StackTrace : ${stackTrace.toString()}');
       return Left(Failure('Error Data ${e.toString()}'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, String>> deleteSimulation({required String id}) async {
+    try {
+      debugPrint('========== DELETE SIMULATION ==========');
+      debugPrint('ID: $id');
+
+      final response = await apiService.dio.delete(
+        deleteSimulationEndPoint(id),
+      );
+
+      debugPrint('STATUS CODE: ${response.statusCode}');
+      debugPrint('DATA: ${response.data}');
+
+      if ((response.statusCode == 200 || response.statusCode == 204) &&
+          (response.data == null ||
+              response.data['success'] == true ||
+              response.data['success'] == null)) {
+        final message = response.data is Map
+            ? (response.data['message']?.toString() ?? 'Simulation deleted')
+            : 'Simulation deleted';
+        return Right(message);
+      }
+
+      final message = response.data['message']?.toString();
+      return Left(Failure(message ?? 'Delete simulation failed'));
+    } on DioException catch (e, stackTrace) {
+      debugPrint('========== DIO ERROR ==========');
+      debugPrint('TYPE: ${e.type}');
+      debugPrint('MESSAGE: ${e.message}');
+      debugPrint('STATUS: ${e.response?.statusCode}');
+      debugPrint('RESPONSE: ${e.response?.data}');
+      debugPrint('STACKTRACE: $stackTrace');
+
+      return Left(
+        Failure(
+          e.response?.data?['message']?.toString() ??
+              e.message ??
+              'Network error',
+        ),
+      );
+    } catch (e, stackTrace) {
+      debugPrint('========== UNKNOWN ERROR ==========');
+      debugPrint('ERROR: $e');
+      debugPrint('STACKTRACE: $stackTrace');
+      return Left(Failure(e.toString()));
     }
   }
 

@@ -53,3 +53,25 @@ final class SimulationsListFailure extends SimulationState {
   @override
   List<Object?> get props => [message];
 }
+
+final class DeleteSimulationLoading extends SimulationState {
+  DeleteSimulationLoading();
+}
+
+final class DeleteSimulationSuccess extends SimulationState {
+  final String message;
+
+  DeleteSimulationSuccess({required this.message});
+
+  @override
+  List<Object?> get props => [message];
+}
+
+final class DeleteSimulationFailure extends SimulationState {
+  final Failure message;
+
+  DeleteSimulationFailure({required this.message});
+
+  @override
+  List<Object?> get props => [message];
+}

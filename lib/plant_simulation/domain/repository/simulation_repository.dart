@@ -14,4 +14,6 @@ abstract class SimulationRepository {
   });
 
   Future<Either<Failure, List<FarmSimulationEntity>>> getFarmSimulation();
+
+  Future<Either<Failure, String>> deleteFarmSimulation({required String id});
 }

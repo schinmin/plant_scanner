@@ -39,12 +39,31 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: BlocConsumer<SimulationBloc, SimulationState>(
-        listenWhen: (previous, current) => current is SimulationsListFailure,
+        listenWhen: (previous, current) =>
+            current is SimulationsListFailure ||
+            current is DeleteSimulationSuccess ||
+            current is DeleteSimulationFailure,
         listener: (context, state) {
           if (state is SimulationsListFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Error: ${state.message.message}'),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          } else if (state is DeleteSimulationSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.green,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          } else if (state is DeleteSimulationFailure) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Delete failed: ${state.message.message}'),
                 backgroundColor: Colors.red,
                 duration: const Duration(seconds: 3),
               ),
@@ -260,13 +279,16 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
     BuildContext context,
   ) {
     final hasTasks = simulation.scheduleTasks.isNotEmpty;
-    final isNarrow = MediaQuery.sizeOf(context).width < 380;
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isNarrow = screenWidth < 380;
+    final horizontalPadding = screenWidth < 360 ? 12.0 : 16.0;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.shade200,
@@ -289,12 +311,16 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
           },
           borderRadius: BorderRadius.circular(16),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(horizontalPadding),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                // Top meta row
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  alignment: WrapAlignment.spaceBetween,
                   children: [
                     hasTasks
                         ? ElevatedButton.icon(
@@ -303,14 +329,16 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
                             },
                             icon: const Icon(
                               Icons.notifications_active,
-                              size: 18,
+                              size: 16,
                             ),
-                            label: const Text('Notification ပေးပါ'),
+                            label: Text(
+                              isNarrow ? 'Notify' : 'Notification ပေးပါ',
+                            ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blue.shade700,
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: isNarrow ? 10 : 14,
                                 vertical: 8,
                               ),
                               shape: RoundedRectangleBorder(
@@ -320,11 +348,11 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
                           )
                         : Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
+                              horizontal: 10,
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.grey.shade200,
+                              color: Colors.grey.shade100,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
@@ -332,7 +360,7 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
                               children: [
                                 Icon(
                                   Icons.notifications_off,
-                                  size: 16,
+                                  size: 14,
                                   color: Colors.grey.shade600,
                                 ),
                                 const SizedBox(width: 4),
@@ -354,9 +382,11 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 14),
 
                 // Header with farm name and status
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
                       padding: const EdgeInsets.all(10),
@@ -376,29 +406,35 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            simulation.farmName ?? "",
-                            style: const TextStyle(
-                              fontSize: 18,
+                            simulation.farmName ?? '',
+                            style: TextStyle(
+                              fontSize: isNarrow ? 16 : 18,
                               fontWeight: FontWeight.bold,
                               color: Colors.black87,
                             ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
+                          const SizedBox(height: 2),
                           Text(
-                            simulation.riceType ?? "",
+                            simulation.riceType ?? '',
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 13,
                               color: Colors.grey.shade600,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
+                          const SizedBox(height: 8),
+                          _buildStatusBadge(simulation),
                         ],
                       ),
                     ),
-                    _buildStatusBadge(simulation),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
 
-                // Details row
+                // Details chips
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -412,60 +448,93 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
                       label:
                           '${simulation.farmArea?.toStringAsFixed(1) ?? '0'} acres',
                     ),
+                    if (simulation.season != null &&
+                        simulation.season!.isNotEmpty)
+                      _buildInfoChip(
+                        icon: Icons.wb_sunny_outlined,
+                        label: simulation.season!,
+                      ),
                   ],
                 ),
                 const SizedBox(height: 12),
 
-                // Divider
-                Divider(color: Colors.grey.shade200),
-                const SizedBox(height: 8),
+                Divider(color: Colors.grey.shade200, height: 1),
+                const SizedBox(height: 12),
 
                 // Financial summary
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 8,
-                  alignment: WrapAlignment.spaceBetween,
-                  children: [
-                    _buildFinancialInfo(
-                      'ကုန်ကျစရိတ်',
-                      simulation.totalEstimatedCost?.toString() ?? 'N/A',
-                      Colors.blue,
-                    ),
-                    _buildFinancialInfo(
-                      'ဝင်ငွေ',
-                      simulation.estimatedIncome?.toString() ?? 'N/A',
-                      Colors.green,
-                    ),
-                    _buildFinancialInfo(
-                      'ROI',
-                      simulation.roiPercentage != null
-                          ? '${simulation.roiPercentage!.toStringAsFixed(1)}%'
-                          : 'N/A',
-                      _isProfitable(simulation) ? Colors.green : Colors.red,
-                    ),
-                  ],
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final useRow = constraints.maxWidth >= 300;
+                    final items = [
+                      _buildFinancialInfo(
+                        'ကုန်ကျစရိတ်',
+                        simulation.totalEstimatedCost?.toString() ?? 'N/A',
+                        Colors.blue,
+                      ),
+                      _buildFinancialInfo(
+                        'ဝင်ငွေ',
+                        simulation.estimatedIncome?.toString() ?? 'N/A',
+                        Colors.green,
+                      ),
+                      _buildFinancialInfo(
+                        'ROI',
+                        simulation.roiPercentage != null
+                            ? '${simulation.roiPercentage!.toStringAsFixed(1)}%'
+                            : 'N/A',
+                        _isProfitable(simulation) ? Colors.green : Colors.red,
+                      ),
+                    ];
+
+                    if (useRow) {
+                      return Row(
+                        children: [
+                          for (var i = 0; i < items.length; i++) ...[
+                            Expanded(child: items[i]),
+                            if (i < items.length - 1)
+                              Container(
+                                width: 1,
+                                height: 36,
+                                color: Colors.grey.shade200,
+                              ),
+                          ],
+                        ],
+                      );
+                    }
+
+                    return Wrap(
+                      spacing: 16,
+                      runSpacing: 10,
+                      children: items,
+                    );
+                  },
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
 
                 // Action buttons
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  alignment: isNarrow
-                      ? WrapAlignment.start
-                      : WrapAlignment.end,
-                  children: [
-                    TextButton.icon(
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final stackButtons = constraints.maxWidth < 320;
+
+                    final deleteButton = OutlinedButton.icon(
                       onPressed: () {
                         _showDeleteConfirmation(context, simulation);
                       },
                       icon: const Icon(Icons.delete_outline, size: 18),
                       label: const Text('Delete'),
-                      style: TextButton.styleFrom(
+                      style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.red.shade700,
+                        side: BorderSide(color: Colors.red.shade200),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
-                    ),
-                    ElevatedButton.icon(
+                    );
+
+                    final viewButton = ElevatedButton.icon(
                       onPressed: () {
                         Navigator.push(
                           context,
@@ -483,14 +552,33 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
-                          vertical: 8,
+                          vertical: 10,
                         ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                    ),
-                  ],
+                    );
+
+                    if (stackButtons) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          viewButton,
+                          const SizedBox(height: 8),
+                          deleteButton,
+                        ],
+                      );
+                    }
+
+                    return Row(
+                      children: [
+                        Expanded(child: deleteButton),
+                        const SizedBox(width: 8),
+                        Expanded(child: viewButton),
+                      ],
+                    );
+                  },
                 ),
               ],
             ),
@@ -716,39 +804,36 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
 
   Widget _buildStatusBadge(FarmSimulationEntity simulation) {
     final isProfitable = _isProfitable(simulation);
-    return Flexible(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: isProfitable ? Colors.green.shade100 : Colors.red.shade100,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isProfitable ? Icons.trending_up : Icons.trending_down,
-              size: 16,
-              color: isProfitable ? Colors.green.shade700 : Colors.red.shade700,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: isProfitable ? Colors.green.shade100 : Colors.red.shade100,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isProfitable ? Icons.trending_up : Icons.trending_down,
+            size: 14,
+            color: isProfitable ? Colors.green.shade700 : Colors.red.shade700,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            isProfitable
+                ? 'မြတ်နိုင်သည့်စိုက်ခင်း'
+                : 'အရှုံးပေါ် နိုင်သည့်စိုက်ခင်း',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: isProfitable
+                  ? Colors.green.shade700
+                  : Colors.red.shade700,
             ),
-            const SizedBox(width: 4),
-            Flexible(
-              child: Text(
-                isProfitable
-                    ? 'မြတ်နိုင်သည့်စိုက်ခင်း'
-                    : 'အရှုံးပေါ် နိုင်သည့်စိုက်ခင်း',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: isProfitable
-                      ? Colors.green.shade700
-                      : Colors.red.shade700,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          ),
+        ],
       ),
     );
   }
@@ -775,27 +860,32 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
   }
 
   Widget _buildFinancialInfo(String label, String value, Color color) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            color: Colors.grey.shade500,
-            fontWeight: FontWeight.w500,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey.shade500,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: color,
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -803,9 +893,20 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
     BuildContext context,
     FarmSimulationEntity simulation,
   ) {
+    final simulationId = simulation.id;
+    if (simulationId == null || simulationId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cannot delete: simulation id not found'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Delete Simulation'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -828,15 +929,15 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
-              // context.read<SimulationBloc>().add(
-              //   DeleteSimulationEvent(id: simulation.id),
-              // );
+              Navigator.pop(dialogContext);
+              context.read<SimulationBloc>().add(
+                DeleteSimulationEvent(id: simulationId),
+              );
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Delete'),

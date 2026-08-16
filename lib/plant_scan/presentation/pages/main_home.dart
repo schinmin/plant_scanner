@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
+import 'package:plant_scanner_app/notifications/notifications_screen.dart';
 import 'package:plant_scanner_app/plant_scan/presentation/pages/crop_market_screen.dart';
 import 'package:plant_scanner_app/plant_scan/presentation/pages/leaf_scanner.dart';
 import 'package:plant_scanner_app/plant_simulation/presentation/screens/my_simulations.dart';
@@ -35,8 +36,15 @@ class _MainHomeState extends State<MainHome> {
 
         actions: [
           IconButton(
-            icon: const Icon(Icons.help_outline, color: Colors.white),
-            onPressed: () {},
+            icon: const Icon(Icons.notification_add, color: Colors.white),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => NotificationListScreen(),
+                ),
+              );
+            },
           ),
         ],
       ),

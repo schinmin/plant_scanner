@@ -41,6 +41,15 @@ class GetSimulationEvent extends SimulationEvent {
   GetSimulationEvent();
 }
 
+class DeleteSimulationEvent extends SimulationEvent {
+  final String id;
+
+  DeleteSimulationEvent({required this.id});
+
+  @override
+  List<Object?> get props => [id];
+}
+
 class ResetSimulationEvent extends SimulationEvent {
   ResetSimulationEvent();
 }

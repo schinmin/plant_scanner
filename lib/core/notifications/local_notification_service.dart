@@ -1,5 +1,7 @@
 // lib/core/notifications/local_notification_service.dart
 
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
@@ -119,6 +121,45 @@ class NotificationService {
     debugPrint('Notification tapped! Payload: $payload');
   }
 
+  /// Show an immediate test notification (useful on every app open).
+  Future<void> showTestNotification() async {
+    if (!_initialized) {
+      await initNotification();
+    }
+
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          'simulation_tasks_channel',
+          'စိုက်ပျိုးရေး အကြောင်းကြားချက်များ',
+          channelDescription:
+              'စိုက်ပျိုးရေး လုပ်ငန်းစဉ်များအတွက် အကြောင်းကြားချက်များ',
+          importance: Importance.max,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+          enableVibration: true,
+          playSound: true,
+        );
+
+    const notificationDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      ),
+    );
+
+    await _notificationsPlugin.show(
+      id: 99999,
+      title: 'စိုက်ပျိုးရေး သတိပေးချက်',
+      body: 'သင်၏ စပါးစိုက်ခင်းသည် ယနေ့ ပိုးသတ်ဆေးဖြန်းရန် ဖြစ်ပါသည်။',
+      notificationDetails: notificationDetails,
+      payload: 'test_on_open',
+    );
+
+    debugPrint('Test notification shown on app open');
+  }
+
   Future<bool> checkExactAlarmPermission() async {
     final androidPlugin = _notificationsPlugin
         .resolvePlatformSpecificImplementation<
@@ -228,6 +269,14 @@ class NotificationService {
       scheduledDate,
       tz.local,
     );
+    final Map<String, dynamic> payloadMap = {
+      'task_id': id.toString(),
+      'title': title,
+      'scheduled_date': scheduledDate.toIso8601String(), // ✅ Date ကို သိမ်းပါ
+      'payload': payloadData ?? 'task_$id',
+    };
+
+    final String payload = jsonEncode(payloadMap);
 
     debugPrint('Scheduling notification at: $tzScheduledDate');
     debugPrint('ID: $finalId, Title: $title');
@@ -241,7 +290,7 @@ class NotificationService {
           : AndroidScheduleMode.inexactAllowWhileIdle,
       title: title,
       body: body,
-      payload: payloadData ?? 'task_$finalId',
+      payload: payload,
     );
 
     debugPrint('Scheduled notification ID: $finalId');
