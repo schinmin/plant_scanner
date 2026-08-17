@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:plant_scanner_app/core/notifications/local_notification_service.dart';
 import 'package:plant_scanner_app/core/notifications/schedule_tasks_notification.dart';
+import 'package:plant_scanner_app/notifications/notifications_screen.dart';
 import 'package:plant_scanner_app/plant_simulation/data/models/schedule_task_model.dart';
 import 'package:plant_scanner_app/plant_simulation/presentation/bloc/bloc/simulation_bloc.dart';
 import 'package:plant_scanner_app/plant_simulation/domain/entity/farm_simulation_entity.dart';
@@ -38,6 +39,26 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        centerTitle: true,
+        title: Text(
+          "ကျွန်ုပ်၏ စိုက်ခင်းများ",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => NotificationListScreen(),
+                ),
+              );
+            },
+            icon: Icon(Icons.notification_add),
+          ),
+        ],
+      ),
       body: BlocConsumer<SimulationBloc, SimulationState>(
         listenWhen: (previous, current) =>
             current is SimulationsListFailure ||
@@ -193,7 +214,7 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Start your first farm simulation today!\nCreate a new simulation to get started.',
+              'သင့်၏စိုက်ခင်းများမရှိသေးပါ။\nစမ်းသပ်စိုက်ခင်းများ စိုက်ပျိုးရန် စတင်လိုက်ပါ။',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,
@@ -252,9 +273,8 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
       child: Column(
         children: [
           // ✅ "အားလုံး Notification ပေးပါ" Button
-          if (simulationsWithTasks.isNotEmpty)
-            _buildScheduleAllButton(simulationsWithTasks, context),
-
+          // if (simulationsWithTasks.isNotEmpty)
+          //   _buildScheduleAllButton(simulationsWithTasks, context),
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
@@ -332,7 +352,7 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
                               size: 16,
                             ),
                             label: Text(
-                              isNarrow ? 'Notify' : 'Notification ပေးပါ',
+                              isNarrow ? 'Notify' : 'Notification ပေးရန်',
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blue.shade700,
@@ -426,14 +446,22 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 8),
-                          _buildStatusBadge(simulation),
+                          // _buildStatusBadge(simulation),
                         ],
                       ),
                     ),
+                    _buildStatusBadge(simulation),
                   ],
                 ),
                 const SizedBox(height: 14),
-
+                Row(
+                  children: [
+                    Text(
+                      "စိုက်ပျိုးရန် လုပ်ဆောင်ချက် :(${simulation.scheduleTasks.length})ချက်",
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
                 // Details chips
                 Wrap(
                   spacing: 8,
@@ -501,11 +529,7 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
                       );
                     }
 
-                    return Wrap(
-                      spacing: 16,
-                      runSpacing: 10,
-                      children: items,
-                    );
+                    return Wrap(spacing: 16, runSpacing: 10, children: items);
                   },
                 ),
                 const SizedBox(height: 14),
@@ -539,9 +563,8 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => SimulationSuccessScreen(
-                              simulation: simulation,
-                            ),
+                            builder: (context) =>
+                                SimulationSuccessScreen(simulation: simulation),
                           ),
                         );
                       },
@@ -721,7 +744,9 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
               ),
             ),
             SizedBox(width: 12),
-            Text('Scheduling all notifications...'),
+            Text(
+              'လုပ်ငန်းစဥ်များကို \nသတိပေးခြင်းစနစ်ထဲသို့ထည့်သွင်းနေပါသည်...',
+            ),
           ],
         ),
         duration: Duration(seconds: 3),
@@ -826,9 +851,7 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: isProfitable
-                  ? Colors.green.shade700
-                  : Colors.red.shade700,
+              color: isProfitable ? Colors.green.shade700 : Colors.red.shade700,
             ),
             overflow: TextOverflow.ellipsis,
             maxLines: 1,

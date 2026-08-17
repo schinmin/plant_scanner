@@ -53,6 +53,7 @@ class SimulationSuccessScreen extends StatelessWidget {
                   simulation.createdAt ??
                   DateTime.tryParse(simulation.plantingDate ?? '') ??
                   DateTime.now(),
+              farmName: simulation.farmName ?? "",
             ),
             const SizedBox(height: 10),
             if (simulation.recommendedFertilizerSchedule != null &&
@@ -193,11 +194,7 @@ class SimulationSuccessScreen extends StatelessWidget {
     if (isCompact) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          homeButton,
-          const SizedBox(height: 12),
-          shareButton,
-        ],
+        children: [homeButton, const SizedBox(height: 12), shareButton],
       );
     }
 

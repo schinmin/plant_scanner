@@ -20,6 +20,7 @@ class QuickTest {
 
     final testTask = ScheduleTaskModel(
       id: 'quick_test_${DateTime.now().millisecondsSinceEpoch}',
+      farmName: "Test စိုက်ခင်း",
       taskTitle: 'Quick Test Notification',
       description: 'This is a quick test notification',
       taskType: 'GENERAL',

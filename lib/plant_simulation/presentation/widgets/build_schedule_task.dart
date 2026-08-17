@@ -6,6 +6,7 @@ Widget buildScheduleTasks({
   required BuildContext context,
   required List<ScheduleTaskEntity> scheduleTasks,
   required DateTime plantingDate,
+  required String farmName,
 }) {
   if (scheduleTasks.isEmpty) {
     return const SizedBox.shrink();
@@ -14,19 +15,20 @@ Widget buildScheduleTasks({
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      const Padding(
-        padding: EdgeInsets.symmetric(vertical: 12.0),
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12.0),
         child: Row(
           children: [
-            Icon(Icons.event_note_rounded, color: Colors.green),
-            SizedBox(width: 8),
+            const Icon(Icons.event_note_rounded, color: Colors.green),
+            const SizedBox(width: 8),
             Text(
-              'စိုက်ပျိုးရေး လုပ်ငန်းစဉ် အချိန်ဇယား',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              '$farmName ၏\nစိုက်ပျိုးရေး လုပ်ငန်းစဉ် အချိန်ဇယား',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ],
         ),
       ),
+
       ListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),

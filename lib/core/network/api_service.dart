@@ -1,7 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:plant_scanner_app/auth/presentation/screens/register_screen.dart';
 import 'package:plant_scanner_app/core/constant/api_constant.dart';
 import 'package:plant_scanner_app/core/database/shared_prefercences.dart';
+import 'package:plant_scanner_app/main.dart';
 
 class ApiService {
   late Dio dio;
@@ -52,7 +54,7 @@ class ApiService {
           handler.next(response);
         },
 
-        onError: (DioException e, handler) {
+        onError: (DioException e, handler) async {
           debugPrint('========== API ERROR ==========');
           debugPrint('Type: ${e.type}');
           debugPrint('Message: ${e.message}');
@@ -63,6 +65,22 @@ class ApiService {
             'Request: ${e.requestOptions.method} '
             '${e.requestOptions.uri}',
           );
+          // 🚨 Handle 401 Unauthorized Error
+          if (e.response?.statusCode == 401) {
+            debugPrint(
+              '🔒 Unauthorized (401)! Clearing session & redirecting...',
+            );
+
+            // 1. Clear stored token and cached data
+            _authToken = null;
+            await localStorageService.clearAll();
+
+            // 2. Clear route stack and navigate to RegisterPage
+            navigatorKey.currentState?.pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const RegisterPage()),
+              (route) => false,
+            );
+          }
 
           handler.next(e);
         },

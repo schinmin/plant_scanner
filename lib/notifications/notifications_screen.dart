@@ -52,7 +52,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'စီစဉ်ထားသော အကြောင်းကြားချက်များ',
+          'Notifications',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.green.shade700,
@@ -91,7 +91,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddTestNotificationDialog,
         icon: const Icon(Icons.add),
-        label: const Text('Test Notification'),
+        label: const Text('Add Notification'),
         backgroundColor: Colors.blue.shade700,
         foregroundColor: Colors.white,
       ),
@@ -118,8 +118,8 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
           Expanded(
             child: Text(
               _hasExactAlarmPermission
-                  ? '✅ Exact alarm permission granted. Notifications will fire at exact times.'
-                  : '⚠️ Exact alarm permission is disabled. Notifications may be delayed.',
+                  ? '✅ တိကျသော နှိုးစက်/သတိပေးချက် ခွင့်ပြုချက် ရရှိထားပါသည်။ သတိပေးချက်များ ကွက်တိအချိန်၌ ပေါ်လာမည် ဖြစ်သည်။'
+                  : '⚠️ တိကျသော နှိုးစက်/သတိပေးချက် ခွင့်ပြုချက်ကို ပိတ်ထားပါသည်။ သတိပေးချက်များ လာရောက်ရန် ကြန့်ကြာနိုင်ပါသည်။',
               style: TextStyle(
                 fontSize: 13,
                 color: _hasExactAlarmPermission
@@ -224,6 +224,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
         padding: const EdgeInsets.all(16),
         itemCount: _pendingNotifications.length,
         itemBuilder: (context, index) {
+          final reverseNotifications = _pendingNotifications.reversed.toList();
           final notification = _pendingNotifications[index];
           return _buildNotificationCard(notification);
         },
@@ -240,10 +241,20 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
 
     // Payload ကနေ task_id ကို ဆွဲထုတ်ပါ
 
-    final Map<String, dynamic> data = jsonDecode(notification.payload ?? '{}');
+    //final Map<String, dynamic> data = jsonEncode(notification.p);
     String taskId = notification.payload ?? 'N/A';
-    String scheduledDateText = data['scheduled_date'];
 
+    // Safely decode or assign an empty map if payload is null
+    final Map<String, dynamic> decodedData = notification.payload != null
+        ? jsonDecode(notification.payload ?? "")
+        : {};
+
+    // Now decodedData is guaranteed to be assigned on all execution paths
+    final DateTime scheduledTaskDate = decodedData.containsKey('scheduled_date')
+        ? DateTime.parse(decodedData['scheduled_date'])
+        : DateTime.now();
+
+    String scheduledDateText = "";
     // Payload က JSON string ဖြစ်နိုင်ရင် parse လုပ်ပါ
     try {
       if (notification.payload != null &&
@@ -294,6 +305,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text(DateFormat('MMM dd, yyyy').format(scheduledTaskDate)),
                 // Header Row
                 Row(
                   children: [
@@ -313,30 +325,6 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
                     const SizedBox(width: 12),
 
                     // Title
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            notification.title ?? 'No Title',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            'ID: ${notification.id}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
 
                     // Payload Badge
                     if (notification.payload != null)
@@ -358,44 +346,9 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
                           ),
                         ),
                       ),
-                  ],
-                ),
 
-                const SizedBox(height: 8),
+                    const SizedBox(width: 100),
 
-                // Body
-                if (notification.body != null)
-                  Text(
-                    notification.body!,
-                    style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-
-                const SizedBox(height: 8),
-
-                // Payload Info
-                Row(
-                  children: [
-                    Icon(
-                      Icons.info_outline,
-                      size: 14,
-                      color: Colors.grey.shade500,
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        'Task: $taskId',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade500,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-
-                    // Cancel Button
                     TextButton.icon(
                       onPressed: () {
                         _cancelSingleNotification(notification.id);
@@ -410,6 +363,68 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
                     ),
                   ],
                 ),
+
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      notification.title ?? 'No Title',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    // Text(
+                    //   'ID: ${notification.id}',
+                    //   style: TextStyle(
+                    //     fontSize: 12,
+                    //     color: Colors.grey.shade500,
+                    //   ),
+                    // ),
+                  ],
+                ),
+
+                const SizedBox(height: 8),
+
+                // Body
+                if (notification.body != null)
+                  Text(
+                    notification.body!,
+                    style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+
+                const SizedBox(height: 8),
+
+                // Payload Info
+                // Row(
+                //   children: [
+                //     Icon(
+                //       Icons.info_outline,
+                //       size: 14,
+                //       color: Colors.grey.shade500,
+                //     ),
+                //     const SizedBox(width: 4),
+                //     Expanded(
+                //       child: Text(
+                //         'Task: $taskId',
+                //         style: TextStyle(
+                //           fontSize: 12,
+                //           color: Colors.grey.shade500,
+                //         ),
+                //         maxLines: 1,
+                //         overflow: TextOverflow.ellipsis,
+                //       ),
+                //     ),
+
+                //     // Cancel Button
+
+                //   ],
+                // ),
               ],
             ),
           ),
@@ -580,7 +595,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) {
           return AlertDialog(
-            title: const Text('Test Notification အသစ်ထည့်ရန်'),
+            title: const Text('Notification အသစ်ထည့်ရန်'),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,

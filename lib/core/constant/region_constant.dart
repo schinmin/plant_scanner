@@ -32,7 +32,7 @@ class MyanmarRegions {
     ),
     Region(id: 'bago', nameMm: 'ပဲခူး', nameEn: 'Bago', type: 'တိုင်းဒေသကြီး'),
     Region(
-      id: 'ayeyarwady',
+      id: 'ayarwaddy',
       nameMm: 'ဧရာဝတီ',
       nameEn: 'Ayeyarwady',
       type: 'တိုင်းဒေသကြီး',

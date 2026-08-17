@@ -145,7 +145,7 @@ class _SplashScreenState extends State<SplashScreen>
 
                   // App Name
                   const Text(
-                    'AI Alert',
+                    'TechArgi',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 36,

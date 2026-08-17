@@ -7,6 +7,7 @@ import 'package:plant_scanner_app/auth/presentation/widgets/auth_button.dart';
 import 'package:plant_scanner_app/auth/presentation/widgets/auth_text_field.dart';
 import 'package:plant_scanner_app/core/di/injection.dart';
 import 'package:plant_scanner_app/plant_scan/presentation/pages/main_home.dart';
+import 'package:plant_scanner_app/plant_scan/presentation/pages/welther_screen.dart';
 import 'package:plant_scanner_app/plant_simulation/presentation/bloc/bloc/simulation_bloc.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -145,7 +146,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 const SizedBox(width: 8),
                 Center(
                   child: const Text(
-                    'AI Alert စိုက်ပျိုးရေး',
+                    'Smart Farming Simulation',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,

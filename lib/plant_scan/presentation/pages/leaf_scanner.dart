@@ -148,16 +148,16 @@ class _LeafScannerState extends State<LeafScanner> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(
-      //   title: const Text(
-      //     'Leaf Scanner',
-      //     style: TextStyle(fontWeight: FontWeight.bold),
-      //   ),
-      //   backgroundColor: Colors.green.shade700,
-      //   foregroundColor: Colors.white,
-      //   elevation: 0,
-      //   centerTitle: true,
-      // ),
+      appBar: AppBar(
+        title: const Text(
+          'Leaf Scanner',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Colors.green.shade700,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+      ),
       body: BlocConsumer<GetapiresponseBloc, GetapiresponseState>(
         listener: (context, state) {
           if (state is GetapiresponseFailure) {

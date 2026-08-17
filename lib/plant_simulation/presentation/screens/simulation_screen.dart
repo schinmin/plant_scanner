@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:plant_scanner_app/plant_scan/presentation/pages/main_home.dart';
+import 'package:plant_scanner_app/plant_scan/presentation/pages/welther_screen.dart';
 import 'package:plant_scanner_app/plant_simulation/data/models/region_model.dart';
 import 'package:plant_scanner_app/plant_simulation/presentation/bloc/bloc/simulation_bloc.dart';
 import 'package:intl/intl.dart';
@@ -143,9 +144,8 @@ class _SimulationScreenState extends State<SimulationScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => SimulationSuccessScreen(
-                  simulation: state.farmSimulation,
-                ),
+                builder: (context) =>
+                    SimulationSuccessScreen(simulation: state.farmSimulation),
               ),
             );
           } else if (state is CreateSimulationFailure) {
@@ -172,7 +172,7 @@ class _SimulationScreenState extends State<SimulationScreen> {
                   CircularProgressIndicator(color: Colors.green),
                   SizedBox(height: 16),
                   Text(
-                    'Creating Simulation...',
+                    "ခေတ္တ စောင့်ဆိုင်းပါ....",
                     style: TextStyle(fontSize: 16, color: Colors.grey),
                   ),
                 ],
@@ -273,22 +273,7 @@ class _SimulationScreenState extends State<SimulationScreen> {
                   },
                   onFieldSubmitted: (_) => _farmAreaFocus.requestFocus(),
                 ),
-                const SizedBox(height: 16),
-                SoilTypeDropdown(
-                  label: 'မြေအမျိုးအစား',
-                  hintText: 'သင့်တော်သော မြေအမျိုးအစားကို ရွေးပါ',
-                  selectedRegion: _selectedRegion,
-                  selectedSoilType: _selectedSoilType,
-                  onChanged: (String soilType) {
-                    setState(() {
-                      _selectedSoilType = soilType;
-                      _soilTypeError = null;
-                    });
-                  },
-                  isRequired: true,
-                  errorText: _soilTypeError,
-                ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
                 _buildTextField(
                   controller: _farmAreaController,
                   focusNode: _farmAreaFocus,
@@ -315,6 +300,23 @@ class _SimulationScreenState extends State<SimulationScreen> {
                   },
                   onFieldSubmitted: (_) => _selectDate(context),
                 ),
+                const SizedBox(height: 16),
+                SoilTypeDropdown(
+                  label: 'မြေအမျိုးအစား',
+                  hintText: 'သင့်တော်သော မြေအမျိုးအစားကို ရွေးပါ',
+                  selectedRegion: _selectedRegion,
+                  selectedSoilType: _selectedSoilType,
+                  onChanged: (String soilType) {
+                    setState(() {
+                      _selectedSoilType = soilType;
+                      _soilTypeError = null;
+                    });
+                  },
+                  isRequired: true,
+                  errorText: _soilTypeError,
+                ),
+                const SizedBox(height: 16),
+
                 const SizedBox(height: 16),
                 _buildDatePicker(),
                 const SizedBox(height: 28),
@@ -666,22 +668,19 @@ class _SimulationScreenState extends State<SimulationScreen> {
                         state.farmSimulation.soilType.toString(),
                       ),
                       const Divider(),
-                      _buildInfoRow(
-                        'စိုက်ပျိုးမည့်ရက်',
-                        () {
-                          try {
-                            return DateFormat('MMM d, yyyy').format(
-                              DateTime.parse(
-                                state.farmSimulation.plantingDate.toString(),
-                              ),
-                            );
-                          } catch (_) {
-                            return state.farmSimulation.plantingDate
-                                    ?.toString() ??
-                                'N/A';
-                          }
-                        }(),
-                      ),
+                      _buildInfoRow('စိုက်ပျိုးမည့်ရက်', () {
+                        try {
+                          return DateFormat('MMM d, yyyy').format(
+                            DateTime.parse(
+                              state.farmSimulation.plantingDate.toString(),
+                            ),
+                          );
+                        } catch (_) {
+                          return state.farmSimulation.plantingDate
+                                  ?.toString() ??
+                              'N/A';
+                        }
+                      }()),
                     ],
                   ),
                 ),

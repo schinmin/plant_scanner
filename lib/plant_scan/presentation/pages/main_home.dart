@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
+import 'package:plant_scanner_app/bottom_nav_screens/settings.dart';
 import 'package:plant_scanner_app/notifications/notifications_screen.dart';
-import 'package:plant_scanner_app/plant_scan/presentation/pages/crop_market_screen.dart';
-import 'package:plant_scanner_app/plant_scan/presentation/pages/leaf_scanner.dart';
+
+import 'package:plant_scanner_app/plant_scan/presentation/pages/welther_screen.dart';
+import 'package:plant_scanner_app/plant_scan/presentation/widgets/drawer.dart';
 import 'package:plant_scanner_app/plant_simulation/presentation/screens/my_simulations.dart';
 import 'package:plant_scanner_app/plant_simulation/presentation/screens/simulation_screen.dart';
 
@@ -17,18 +19,36 @@ class _MainHomeState extends State<MainHome> {
   int _selectedIndex = 0;
 
   static const List<Widget> _widgetOptions = [
+    WeltherScreen(),
     SimulationScreen(),
     MySimulationsScreen(),
-    LeafScanner(),
-    CropMarketScreen(),
+    // SettingsScreen(),
+
+    // MySimulationsScreen(),
+    // LeafScanner(),
+    // CropMarketScreen(),
   ];
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: ProfileDrawer(isLoggedIn: true, onAuthToggle: () {}),
       appBar: AppBar(
-        title: const Text(
-          'Farm Simulation',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        title: Row(
+          children: [
+            Image.asset(
+              'assets/images/logo.png',
+              height: 40,
+              errorBuilder: (context, error, stackTrace) =>
+                  const Icon(Icons.eco, color: Colors.green, size: 20),
+            ),
+            const Text(
+              'Smart Farm Simulation',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ],
         ),
         backgroundColor: Colors.green.shade700,
         elevation: 0,
@@ -73,9 +93,11 @@ class _MainHomeState extends State<MainHome> {
             color: Colors.black,
             tabs: [
               GButton(icon: Icons.home, text: "Home"),
-              GButton(icon: Icons.area_chart, text: "Simulations"),
-              GButton(icon: Icons.scanner, text: "Leaf_Scan"),
-              GButton(icon: Icons.price_change, text: "Crop-Prices"),
+              GButton(icon: Icons.area_chart, text: ""),
+              GButton(icon: Icons.person, text: ""),
+              // GButton(icon: Icons.settings, text: ""),
+              // GButton(icon: Icons.scanner, text: ""),
+              // GButton(icon: Icons.price_change, text: ""),
             ],
 
             selectedIndex: _selectedIndex,

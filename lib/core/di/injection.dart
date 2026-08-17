@@ -10,6 +10,11 @@ import 'package:plant_scanner_app/auth/domain/usecase/auth_usecase.dart';
 import 'package:plant_scanner_app/auth/presentation/bloc/auth_bloc.dart';
 import 'package:plant_scanner_app/core/network/api_service.dart';
 import 'package:plant_scanner_app/core/network/network_info.dart';
+import 'package:plant_scanner_app/pesticide_scan/data/datasources/pesticide_datasourecs.dart';
+import 'package:plant_scanner_app/pesticide_scan/data/repository/pesticide_repository_impl.dart';
+import 'package:plant_scanner_app/pesticide_scan/domain/repository/pesticide_repository.dart';
+import 'package:plant_scanner_app/pesticide_scan/domain/usecase/pesticide_usecase.dart';
+import 'package:plant_scanner_app/pesticide_scan/presentation/bloc/pesticide_bloc.dart';
 import 'package:plant_scanner_app/plant_scan/data/datasources/get_crop_market_datasource.dart';
 import 'package:plant_scanner_app/plant_scan/data/datasources/get_response_datasource.dart';
 import 'package:plant_scanner_app/plant_scan/data/repository_imp/get_crop_market_repol_impl.dart';
@@ -39,6 +44,7 @@ Future<void> initDependencies() async {
   _initAuthModule();
   _initPlantScanModule();
   _initPlantSimulationModule();
+  _initPesticideScanModule();
 
   // Remove splash screen
   FlutterNativeSplash.remove();
@@ -80,6 +86,22 @@ void _initAuthModule() {
   // Blocs
 
   sl.registerFactory<AuthBloc>(() => AuthBloc(sl<AuthUsecase>()));
+}
+
+void _initPesticideScanModule() {
+  sl.registerLazySingleton<PesticideRemoteDatasource>(
+    () => PesticideRemoteDatasourceImpl(sl()),
+  );
+  sl.registerLazySingleton<PesticideRepository>(
+    () => PesticideRepositoryImpl(sl()),
+  );
+  sl.registerLazySingleton<ScanPesticideUseCase>(
+    () => ScanPesticideUseCase(sl()),
+  );
+
+  sl.registerFactory<PesticideBloc>(
+    () => PesticideBloc(scanPesticideUseCase: sl()),
+  );
 }
 
 /// Plant Scan module

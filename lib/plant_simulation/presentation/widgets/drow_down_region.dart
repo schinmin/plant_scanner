@@ -48,7 +48,7 @@ class RegionDropdown extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 20),
         ],
         Container(
           decoration: BoxDecoration(

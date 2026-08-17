@@ -25,4 +25,11 @@ class localStorageService {
     final prefs = await _prefsService();
     return prefs.getString('fcm_token');
   }
+
+  static Future<void> clearAll() async {
+    final prefs = await _prefsService();
+
+    prefs.remove("fcom_token");
+    prefs.remove('user_token');
+  }
 }

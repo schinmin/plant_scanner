@@ -3,6 +3,7 @@ import 'package:plant_scanner_app/plant_simulation/domain/entity/schedule_task_e
 class ScheduleTaskModel extends ScheduleTaskEntity {
   const ScheduleTaskModel({
     required super.id,
+    required super.farmName,
     required super.dayAfterPlanting,
     required super.taskTitle,
     required super.scheduledDate,
@@ -13,6 +14,7 @@ class ScheduleTaskModel extends ScheduleTaskEntity {
   factory ScheduleTaskModel.fromJson(Map<String, dynamic> json) {
     return ScheduleTaskModel(
       id: json["_id"] ?? "",
+      farmName: json['farm_name'] ?? "",
       dayAfterPlanting: json["days_after_planting"] ?? "",
       taskTitle: json["title"] ?? "",
       scheduledDate: json['scheduled_date'] ?? "",
@@ -24,6 +26,7 @@ class ScheduleTaskModel extends ScheduleTaskEntity {
   factory ScheduleTaskModel.fromEntity(ScheduleTaskEntity entity) {
     return ScheduleTaskModel(
       id: entity.id,
+      farmName: entity.farmName,
       dayAfterPlanting: entity.dayAfterPlanting,
       taskTitle: entity.taskTitle,
       scheduledDate: entity.scheduledDate,

@@ -90,7 +90,7 @@ class _SoilTypeDropdownState extends State<SoilTypeDropdown> {
                 ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 20),
         ],
         Container(
           decoration: BoxDecoration(

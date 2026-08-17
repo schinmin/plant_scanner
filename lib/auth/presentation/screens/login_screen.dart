@@ -154,7 +154,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(width: 8),
               const Text(
-                'AI Alert စိုက်ပျိုးရေး',
+                'Smart Farming Simulation',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,

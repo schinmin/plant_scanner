@@ -42,7 +42,7 @@ class ScheduleTaskNotificationService {
       }
 
       final taskData = _getTaskTypeData(task.taskType);
-      final title = '${taskData['icon']} ${task.taskTitle}';
+      final title = '${task.farmName} ${task.taskTitle}';
       final body =
           '''
 📋 ${task.description}
@@ -56,7 +56,9 @@ class ScheduleTaskNotificationService {
         title: title,
         body: body,
         scheduledDate: notificationTime,
-        payloadData: task.id.isNotEmpty ? task.id : task.notificationId.toString(),
+        payloadData: task.id.isNotEmpty
+            ? task.id
+            : task.notificationId.toString(),
       );
 
       if (scheduled) {

@@ -15,6 +15,14 @@ class SoilData {
       'စေးမြေ (Clay Soil)',
       'သဲနုန်းစေးမြေ (Sandy Clay Loam)',
     ],
+    'ayarwaddy':[
+      'စေးမြေ (Clay Soil)',
+      'စေးနုန်းမြေ (Clay Loam)',
+      'သဲနုန်းမြေ (Sandy Loam)',
+      'နုန်းမြေ (Silty Loam)',
+      'သဲစေးမြေ (Sandy Clay)',
+      'အညိုရောင်သစ်တောမြေ (Brown Forest Soil)',
+    ],
     // ကယားပြည်နယ်
     'kayah': [
       'စေးနုန်းမြေ (Clay Loam)',

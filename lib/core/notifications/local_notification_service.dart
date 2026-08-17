@@ -149,10 +149,17 @@ class NotificationService {
       ),
     );
 
+    final bodyData =
+        '''
+📋  ယနေ့ သည်ပိုးသတ်ဆေးဖြန်းရန် ဖြစ်ပါသည်။
+📅  ${DateTime.now().day}
+🏷️  ယနေ့ပဲ လုပ်ဆောင်လိုက်ပါ။
+🌾  ပိုးသတ်ဆေးဖြန်းခြင်း။
+''';
     await _notificationsPlugin.show(
       id: 99999,
-      title: 'စိုက်ပျိုးရေး သတိပေးချက်',
-      body: 'သင်၏ စပါးစိုက်ခင်းသည် ယနေ့ ပိုးသတ်ဆေးဖြန်းရန် ဖြစ်ပါသည်။',
+      title: 'စိုက်ပျိုးရေး သတိပေးချက်(စပါးစိုက်ခင်း)',
+      body: bodyData,
       notificationDetails: notificationDetails,
       payload: 'test_on_open',
     );
@@ -219,7 +226,7 @@ class NotificationService {
     required String title,
     required String body,
     required DateTime scheduledDate,
-    String? payloadData,
+    required String payloadData,
   }) async {
     if (!_initialized) {
       await initNotification();
@@ -273,7 +280,7 @@ class NotificationService {
       'task_id': id.toString(),
       'title': title,
       'scheduled_date': scheduledDate.toIso8601String(), // ✅ Date ကို သိမ်းပါ
-      'payload': payloadData ?? 'task_$id',
+      'payload': payloadData,
     };
 
     final String payload = jsonEncode(payloadMap);

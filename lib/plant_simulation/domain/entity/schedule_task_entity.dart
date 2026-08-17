@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 class ScheduleTaskEntity extends Equatable {
   final String id;
+  final String farmName;
   final String dayAfterPlanting;
   final String taskTitle;
   final String scheduledDate;
@@ -10,6 +11,7 @@ class ScheduleTaskEntity extends Equatable {
 
   const ScheduleTaskEntity({
     required this.id,
+    required this.farmName,
     required this.dayAfterPlanting,
     required this.taskTitle,
     required this.scheduledDate,
@@ -20,6 +22,7 @@ class ScheduleTaskEntity extends Equatable {
   @override
   List<Object?> get props => [
     id,
+    farmName,
     dayAfterPlanting,
     taskTitle,
     scheduledDate,
