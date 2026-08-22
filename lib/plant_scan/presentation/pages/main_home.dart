@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
-import 'package:plant_scanner_app/bottom_nav_screens/settings.dart';
+import 'package:plant_scanner_app/core/theme/app_theme.dart';
 import 'package:plant_scanner_app/notifications/notifications_screen.dart';
 
 import 'package:plant_scanner_app/plant_scan/presentation/pages/welther_screen.dart';
@@ -21,7 +21,7 @@ class _MainHomeState extends State<MainHome> {
   static const List<Widget> _widgetOptions = [
     WeltherScreen(),
     SimulationScreen(),
-    MySimulationsScreen(),
+    MySimulationsScreen(isChild: false),
     // SettingsScreen(),
 
     // MySimulationsScreen(),
@@ -50,7 +50,7 @@ class _MainHomeState extends State<MainHome> {
             ),
           ],
         ),
-        backgroundColor: Colors.green.shade700,
+        backgroundColor: AppColors.primary,
         elevation: 0,
         centerTitle: true,
 
@@ -68,30 +68,33 @@ class _MainHomeState extends State<MainHome> {
           ),
         ],
       ),
-      body: _widgetOptions.elementAt(_selectedIndex),
+      body: IndexedStack(index: _selectedIndex, children: _widgetOptions),
 
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           boxShadow: [
-            BoxShadow(blurRadius: 20, color: Colors.black.withOpacity(1)),
+            BoxShadow(
+              blurRadius: 20,
+              color: Colors.black.withValues(alpha: 0.08),
+            ),
           ],
         ),
 
         child: Padding(
-          padding: EdgeInsets.all(8),
+          padding: const EdgeInsets.all(8),
 
           child: GNav(
             rippleColor: Colors.grey[300]!,
             hoverColor: Colors.grey[100]!,
             gap: 8,
-            activeColor: Colors.black,
+            activeColor: AppColors.primary,
             iconSize: 24,
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            duration: Duration(milliseconds: 400),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            duration: const Duration(milliseconds: 400),
             tabBackgroundColor: Colors.grey[100]!,
-            color: Colors.black,
-            tabs: [
+            color: Colors.black54,
+            tabs: const [
               GButton(icon: Icons.home, text: "Home"),
               GButton(icon: Icons.area_chart, text: ""),
               GButton(icon: Icons.person, text: ""),

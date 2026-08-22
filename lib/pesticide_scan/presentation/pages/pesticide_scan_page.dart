@@ -82,7 +82,7 @@ class _PesticideScanPageState extends State<PesticideScanPage> {
                 children: [
                   _buildPickerOption(
                     icon: Icons.camera_alt_rounded,
-                    label: 'ကာမရာ',
+                    label: 'ကင်မရာ',
                     color: Colors.green[700]!,
                     onTap: () {
                       Navigator.pop(ctx);
@@ -206,6 +206,7 @@ class _PesticideScanPageState extends State<PesticideScanPage> {
                     height: 300,
                     width: double.infinity,
                     fit: BoxFit.cover,
+                    cacheWidth: 1080,
                   ),
                 ),
                 Positioned(

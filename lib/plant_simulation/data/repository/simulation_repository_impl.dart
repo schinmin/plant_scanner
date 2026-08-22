@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:plant_scanner_app/core/error/failure.dart';
+import 'package:plant_scanner_app/core/network/network_info.dart';
 import 'package:plant_scanner_app/plant_simulation/data/datasources/simulation_datasources.dart';
 import 'package:plant_scanner_app/plant_simulation/domain/entity/farm_simulation_entity.dart';
 import 'package:plant_scanner_app/plant_simulation/domain/repository/simulation_repository.dart';
@@ -7,7 +8,9 @@ import 'package:plant_scanner_app/plant_simulation/domain/repository/simulation_
 class SimulationRepositoryImpl implements SimulationRepository {
   final SimulationDatasources simulationDataSource;
 
-  SimulationRepositoryImpl(this.simulationDataSource);
+  final NetworkInfo networkInfo;
+
+  SimulationRepositoryImpl(this.simulationDataSource, this.networkInfo);
 
   @override
   Future<Either<Failure, FarmSimulationEntity>> createFarmSimulation({
@@ -33,7 +36,11 @@ class SimulationRepositoryImpl implements SimulationRepository {
   @override
   Future<Either<Failure, List<FarmSimulationEntity>>>
   getFarmSimulation() async {
-    return await simulationDataSource.getSimulation();
+    if (await networkInfo.isConnected) {
+      return await simulationDataSource.getSimulation();
+    } else {
+      return Left(Failure("အင်တာနက် ပြတ်တောက်နေပါသည်။"));
+    }
   }
 
   @override

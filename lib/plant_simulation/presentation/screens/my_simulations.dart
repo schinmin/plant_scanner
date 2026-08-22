@@ -13,7 +13,8 @@ import 'package:plant_scanner_app/plant_simulation/presentation/screens/simulati
 import 'package:plant_scanner_app/plant_simulation/presentation/screens/simulation_screen.dart';
 
 class MySimulationsScreen extends StatefulWidget {
-  const MySimulationsScreen({super.key});
+  final bool isChild;
+  const MySimulationsScreen({super.key, required this.isChild});
 
   @override
   State<MySimulationsScreen> createState() => _MySimulationsScreenState();
@@ -39,79 +40,90 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: Text(
-          "ကျွန်ုပ်၏ စိုက်ခင်းများ",
-          style: TextStyle(fontWeight: FontWeight.bold),
+      appBar: widget.isChild
+          ? AppBar(
+              centerTitle: true,
+              title: Text(
+                "ကျွန်ုပ်၏ စိုက်ခင်းများ",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              actions: [
+                IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => NotificationListScreen(),
+                      ),
+                    );
+                  },
+                  icon: Icon(Icons.notification_add),
+                ),
+              ],
+            )
+          : AppBar(),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.green.shade50, Colors.white],
+          ),
         ),
-        actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => NotificationListScreen(),
+        child: BlocConsumer<SimulationBloc, SimulationState>(
+          listenWhen: (previous, current) =>
+              current is SimulationsListFailure ||
+              current is DeleteSimulationSuccess ||
+              current is DeleteSimulationFailure,
+          listener: (context, state) {
+            if (state is SimulationsListFailure) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Error: ${state.message.message}'),
+                  backgroundColor: Colors.red,
+                  duration: const Duration(seconds: 3),
                 ),
               );
-            },
-            icon: Icon(Icons.notification_add),
-          ),
-        ],
-      ),
-      body: BlocConsumer<SimulationBloc, SimulationState>(
-        listenWhen: (previous, current) =>
-            current is SimulationsListFailure ||
-            current is DeleteSimulationSuccess ||
-            current is DeleteSimulationFailure,
-        listener: (context, state) {
-          if (state is SimulationsListFailure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Error: ${state.message.message}'),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 3),
-              ),
-            );
-          } else if (state is DeleteSimulationSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.green,
-                duration: const Duration(seconds: 2),
-              ),
-            );
-          } else if (state is DeleteSimulationFailure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Delete failed: ${state.message.message}'),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 3),
-              ),
-            );
-          }
-        },
-        buildWhen: (previous, current) =>
-            current is SimulationsListLoading ||
-            current is SimulationsListLoaded ||
-            current is SimulationsListFailure ||
-            current is SimulationInitial,
-        builder: (context, state) {
-          if (state is SimulationsListLoading || state is SimulationInitial) {
-            return _buildLoadingState();
-          }
-          if (state is SimulationsListFailure) {
-            return _buildErrorState(state.message.message, context);
-          }
-          if (state is SimulationsListLoaded) {
-            if (state.farmSimulations.isEmpty) {
-              return _buildEmptyState(context);
+            } else if (state is DeleteSimulationSuccess) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: Colors.green,
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            } else if (state is DeleteSimulationFailure) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Delete failed: ${state.message.message}'),
+                  backgroundColor: Colors.red,
+                  duration: const Duration(seconds: 3),
+                ),
+              );
             }
-            return _buildSimulationList(state.farmSimulations, context);
-          }
+          },
+          buildWhen: (previous, current) =>
+              current is SimulationsListLoading ||
+              current is SimulationsListLoaded ||
+              current is SimulationsListFailure ||
+              current is SimulationInitial,
+          builder: (context, state) {
+            if (state is SimulationsListLoading || state is SimulationInitial) {
+              return _buildLoadingState();
+            }
+            if (state is SimulationsListFailure) {
+              return _buildErrorState(state.message.message, context);
+            }
+            if (state is SimulationsListLoaded) {
+              if (state.farmSimulations.isEmpty) {
+                return _buildEmptyState(context);
+              }
+              return _buildSimulationList(state.farmSimulations, context);
+            }
 
-          return _buildLoadingState();
-        },
+            return _buildLoadingState();
+          },
+        ),
       ),
     );
   }
@@ -342,6 +354,9 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
                   crossAxisAlignment: WrapCrossAlignment.center,
                   alignment: WrapAlignment.spaceBetween,
                   children: [
+                    Text(
+                      "စိုက်ပျိုးရန် လုပ်ဆောင်ချက် :(${simulation.scheduleTasks.length})ချက်ကို",
+                    ),
                     hasTasks
                         ? ElevatedButton.icon(
                             onPressed: () {
@@ -351,9 +366,7 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
                               Icons.notifications_active,
                               size: 16,
                             ),
-                            label: Text(
-                              isNarrow ? 'Notify' : 'Notification ပေးရန်',
-                            ),
+                            label: Text(isNarrow ? 'Notify' : 'သတိပေးရန်'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blue.shade700,
                               foregroundColor: Colors.white,
@@ -453,14 +466,7 @@ class _MySimulationsScreenState extends State<MySimulationsScreen> {
                     _buildStatusBadge(simulation),
                   ],
                 ),
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    Text(
-                      "စိုက်ပျိုးရန် လုပ်ဆောင်ချက် :(${simulation.scheduleTasks.length})ချက်",
-                    ),
-                  ],
-                ),
+
                 const SizedBox(height: 20),
                 // Details chips
                 Wrap(

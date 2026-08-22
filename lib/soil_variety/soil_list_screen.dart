@@ -128,6 +128,7 @@ class SoilListCard extends StatelessWidget {
                 width: 120,
                 height: 120,
                 fit: BoxFit.cover,
+                cacheWidth: 240,
               ),
             ),
             // Details
@@ -255,6 +256,7 @@ class _SoilDetailPageState extends State<SoilDetailPage> {
                     height: 200,
                     width: double.infinity,
                     fit: BoxFit.cover,
+                    cacheWidth: 800,
                   ),
                 ),
                 const SizedBox(height: 16),

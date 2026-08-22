@@ -114,162 +114,179 @@ class _WeltherScreenState extends State<WeltherScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade400,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. Top Header & Weather
-              _buildHeader(),
-              const SizedBox(height: 24),
+      //backgroundColor: Colors.grey.shade400,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.green.shade50, Colors.white],
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 10.0,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. Top Header & Weather
+                _buildHeader(),
+                const SizedBox(height: 24),
 
-              // 2. Quick Access Title
-              const Text(
-                'လုပ်ဆောင်ချက်များ',
-                style: TextStyle(
-                  color: Color(0xFF2E7D32),
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+                // 2. Quick Access Title
+                const Text(
+                  'လုပ်ဆောင်ချက်များ',
+                  style: TextStyle(
+                    color: Color(0xFF2E7D32),
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
+                const SizedBox(height: 12),
 
-              // const SimulationScreen(),
+                // const SimulationScreen(),
 
-              // 3. Quick Access Grid
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 1.1,
-                children: [
-                  _buildQuickAccessCard(
-                    title: 'စမ်းသပ်စိုက်ပျိုးခြင်း',
-                    icon: Icons.track_changes,
-                    badge: 'Simulation',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => SimulationScreen(),
-                        ),
-                      );
-                    },
-                  ),
+                // 3. Quick Access Grid
+                GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 1.1,
+                  children: [
+                    _buildQuickAccessCard(
+                      title: 'စမ်းသပ်စိုက်ပျိုးခြင်း',
+                      icon: Icons.track_changes,
+                      badge: 'Simulation',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => SimulationScreen(),
+                          ),
+                        );
+                      },
+                    ),
 
-                  _buildQuickAccessCard(
-                    title: 'သင်၏စိုက်ခင်းများ',
-                    icon: Icons.layers_outlined,
-                    badge: null,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => MySimulationsScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildQuickAccessCard(
-                    title: 'အပင်၏ရောဂါရှာဖွေစစ်ဆေးခြင်း',
-                    icon: Icons.bug_report_outlined,
-                    badge: 'AI SCAN',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => LeafScanner()),
-                      );
-                    },
-                  ),
-                  _buildQuickAccessCard(
-                    title: 'ပိုးသတ်ဆေးများကို စစ်ဆေးခြင်း',
-                    icon: Icons.bug_report_outlined,
-                    badge: 'AI SCAN',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => PesticideScanPage(),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildQuickAccessCard(
-                    title: 'သီးနှံဈေးနှုန်းများ',
-                    icon: Icons.show_chart,
-                    badge: null,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => CropMarketScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // 4. Farming Knowledge Title
-              const Text(
-                'အသိပညာပေးခြင်း',
-                style: TextStyle(
-                  color: Color(0xFF2E7D32),
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+                    _buildQuickAccessCard(
+                      title: 'သင်၏စိုက်ခင်းများ',
+                      icon: Icons.layers_outlined,
+                      badge: null,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                MySimulationsScreen(isChild: true),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildQuickAccessCard(
+                      title: 'အပင်၏ရောဂါရှာဖွေစစ်ဆေးခြင်း',
+                      icon: Icons.bug_report_outlined,
+                      badge: 'AI SCAN',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => LeafScanner(),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildQuickAccessCard(
+                      title: 'ပိုးသတ်ဆေးများကို စစ်ဆေးခြင်း',
+                      icon: Icons.bug_report_outlined,
+                      badge: 'AI SCAN',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PesticideScanPage(),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildQuickAccessCard(
+                      title: 'သီးနှံဈေးနှုန်းများ',
+                      icon: Icons.show_chart,
+                      badge: null,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => CropMarketScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 12),
+                const SizedBox(height: 24),
 
-              // 5. Farming Knowledge Grid
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 1.2,
-                children: [
-                  _buildKnowledgeCard(
-                    title: 'ဆန်အမျိုးအစားများ',
-                    icon: Icons.grass,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => RiceSphereApp(),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildKnowledgeCard(
-                    title: 'မြေအမျိုးအစားများ',
-                    icon: Icons.terrain_outlined,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => SoilListPage()),
-                      );
-                    },
-                  ),
-                  _buildKnowledgeCard(
-                    title: 'ပိုးမွှားနှင့် ရောဂါများ',
-                    icon: Icons.bug_report,
-                    onTap: () {},
-                  ),
-                  _buildKnowledgeCard(
-                    title: 'ကျွမ်းကျင်ပညာရှင်များ',
-                    icon: Icons.person_outline,
-                    onTap: () {},
-                  ),
-                ],
-              ),
-            ],
+                // 4. Farming Knowledge Title
+                // const Text(
+                //   'အသိပညာပေးခြင်း',
+                //   style: TextStyle(
+                //     color: Color(0xFF2E7D32),
+                //     fontSize: 20,
+                //     fontWeight: FontWeight.bold,
+                //   ),
+                // ),
+                // const SizedBox(height: 12),
+
+                // 5. Farming Knowledge Grid
+                // GridView.count(
+                //   shrinkWrap: true,
+                //   physics: const NeverScrollableScrollPhysics(),
+                //   crossAxisCount: 2,
+                //   crossAxisSpacing: 12,
+                //   mainAxisSpacing: 12,
+                //   childAspectRatio: 1.2,
+                //   children: [
+                //     _buildKnowledgeCard(
+                //       title: 'ဆန်အမျိုးအစားများ',
+                //       icon: Icons.grass,
+                //       onTap: () {
+                //         Navigator.push(
+                //           context,
+                //           MaterialPageRoute(
+                //             builder: (context) => RiceSphereApp(),
+                //           ),
+                //         );
+                //       },
+                //     ),
+                //     _buildKnowledgeCard(
+                //       title: 'မြေအမျိုးအစားများ',
+                //       icon: Icons.terrain_outlined,
+                //       onTap: () {
+                //         Navigator.push(
+                //           context,
+                //           MaterialPageRoute(
+                //             builder: (context) => SoilListPage(),
+                //           ),
+                //         );
+                //       },
+                //     ),
+                //     _buildKnowledgeCard(
+                //       title: 'ပိုးမွှားနှင့် ရောဂါများ',
+                //       icon: Icons.bug_report,
+                //       onTap: () {},
+                //     ),
+                //     _buildKnowledgeCard(
+                //       title: 'ကျွမ်းကျင်ပညာရှင်များ',
+                //       icon: Icons.person_outline,
+                //       onTap: () {},
+                //     ),
+                //   ],
+                // ),
+              ],
+            ),
           ),
         ),
       ),

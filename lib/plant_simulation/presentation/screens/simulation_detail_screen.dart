@@ -22,7 +22,7 @@ class SimulationSuccessScreen extends StatelessWidget {
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         title: Text(
-          isCompact ? 'ခန့်မှန်းချက်' : '🌾 စိုက်ပျိုးရေး ခန့်မှန်းချက်',
+          isCompact ? 'ခန့်မှန်းချက်' : '🌾 Farm Simulation',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.green,
@@ -40,12 +40,11 @@ class SimulationSuccessScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSuccessHeader(context),
+            //_buildSuccessHeader(context),
             const SizedBox(height: 16),
             SimulationDetailCard(simulation: simulation),
             const SizedBox(height: 16),
-            SummaryCard(simulation: simulation),
-            const SizedBox(height: 16),
+
             buildScheduleTasks(
               context: context,
               scheduleTasks: simulation.scheduleTasks,
@@ -55,7 +54,6 @@ class SimulationSuccessScreen extends StatelessWidget {
                   DateTime.now(),
               farmName: simulation.farmName ?? "",
             ),
-            const SizedBox(height: 10),
             if (simulation.recommendedFertilizerSchedule != null &&
                 simulation.recommendedFertilizerSchedule!.isNotEmpty) ...[
               FertilizerScheduleCard(
@@ -63,6 +61,10 @@ class SimulationSuccessScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
             ],
+            SummaryCard(simulation: simulation),
+            const SizedBox(height: 16),
+
+            //const SizedBox(height: 10),
             if (simulation.costBreakdown != null) ...[
               CostBreakdownCard(costBreakdown: simulation.costBreakdown!),
               const SizedBox(height: 16),

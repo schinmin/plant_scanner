@@ -217,16 +217,15 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
   // Notification List
   // ==========================================
   Widget _buildNotificationList() {
+    final notifications = _pendingNotifications.reversed.toList();
     return RefreshIndicator(
       onRefresh: _loadData,
       color: Colors.green,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: _pendingNotifications.length,
+        itemCount: notifications.length,
         itemBuilder: (context, index) {
-          final reverseNotifications = _pendingNotifications.reversed.toList();
-          final notification = _pendingNotifications[index];
-          return _buildNotificationCard(notification);
+          return _buildNotificationCard(notifications[index]);
         },
       ),
     );
@@ -244,40 +243,20 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
     //final Map<String, dynamic> data = jsonEncode(notification.p);
     String taskId = notification.payload ?? 'N/A';
 
-    // Safely decode or assign an empty map if payload is null
-    final Map<String, dynamic> decodedData = notification.payload != null
-        ? jsonDecode(notification.payload ?? "")
-        : {};
-
-    // Now decodedData is guaranteed to be assigned on all execution paths
-    final DateTime scheduledTaskDate = decodedData.containsKey('scheduled_date')
-        ? DateTime.parse(decodedData['scheduled_date'])
-        : DateTime.now();
-
-    String scheduledDateText = "";
-    // Payload က JSON string ဖြစ်နိုင်ရင် parse လုပ်ပါ
-    try {
-      if (notification.payload != null &&
-          notification.payload!.startsWith('{')) {
-        // JSON ဖြစ်ရင် parse လုပ်ပါ
-        final Map<String, dynamic> data = Map.from(
-          notification.payload!.split(',').fold({}, (prev, element) {
-            final parts = element.split(':');
-            if (parts.length == 2) {
-              prev[parts[0].trim().replaceAll('"', '')] = parts[1]
-                  .trim()
-                  .replaceAll('}', '')
-                  .replaceAll('"', '');
-            }
-            return prev;
-          }),
-        );
-        taskId = data['task_id'] ?? data['simulation_id'] ?? taskId;
-        scheduledDateText = data['scheduled_date'] ?? 'Unknown';
+    // Safely decode payload JSON; fall back gracefully if it isn't valid JSON.
+    DateTime scheduledTaskDate = DateTime.now();
+    final payload = notification.payload;
+    if (payload != null && payload.startsWith('{')) {
+      try {
+        final Map<String, dynamic> decodedData = jsonDecode(payload);
+        if (decodedData.containsKey('scheduled_date')) {
+          scheduledTaskDate = DateTime.parse(decodedData['scheduled_date']);
+        }
+        taskId =
+            decodedData['task_id'] ?? decodedData['simulation_id'] ?? taskId;
+      } catch (_) {
+        // Payload isn't valid JSON — keep defaults.
       }
-    } catch (e) {
-      // JSON မဟုတ်ရင် payload ကိုပဲ သုံးပါ
-      taskId = notification.payload ?? 'N/A';
     }
 
     return Container(

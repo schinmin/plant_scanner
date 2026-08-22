@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:plant_scanner_app/plant_scan/domain/entity/crop_market.dart';
@@ -17,6 +19,7 @@ class _CropMarketScreenState extends State<CropMarketScreen> {
   String _searchQuery = '';
   int _currentPage = 1;
   bool _isLoadingMore = false;
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -54,11 +57,15 @@ class _CropMarketScreenState extends State<CropMarketScreen> {
       _searchQuery = value;
       _currentPage = 1;
     });
-    _fetchCrops(page: 1, search: value);
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () {
+      _fetchCrops(page: 1, search: value);
+    });
   }
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _searchController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -461,7 +468,7 @@ class _CropCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        'Per ${crop.unit}',
+                        '${crop.quantity}  ${crop.unit}',
                         style: TextStyle(
                           color: Colors.green[800],
                           fontSize: 12,

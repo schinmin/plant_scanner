@@ -320,6 +320,7 @@ class _LeafScannerState extends State<LeafScanner> {
                   height: 200,
                   width: double.infinity,
                   fit: BoxFit.cover,
+                  cacheWidth: 1080,
                 ),
               ),
             ),

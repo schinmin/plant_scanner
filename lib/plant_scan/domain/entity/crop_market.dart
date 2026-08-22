@@ -10,6 +10,8 @@ class CropMarket extends Equatable {
 
   final String? currency;
 
+  final String? quantity;
+
   final String? unit;
 
   final DateTime? updatedAt;
@@ -22,6 +24,7 @@ class CropMarket extends Equatable {
     this.minPrice,
     this.maxPrice,
     this.currency,
+    this.quantity,
     this.unit,
     this.updatedAt,
   });

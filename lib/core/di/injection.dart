@@ -169,7 +169,10 @@ void _initPlantSimulationModule() {
 
   // Repositories
   sl.registerLazySingleton<SimulationRepository>(
-    () => SimulationRepositoryImpl(sl<SimulationDatasources>()),
+    () => SimulationRepositoryImpl(
+      sl<SimulationDatasources>(),
+      sl<NetworkInfo>(),
+    ),
   );
 
   // Use Cases

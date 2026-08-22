@@ -52,50 +52,44 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _navigateToNextScreen() async {
-    // ✅ Wait for splash to show
-    await Future.delayed(const Duration(milliseconds: 2000));
+    // Navigate as soon as both the animation and token check complete.
+    final results = await Future.wait([
+      _animationController.forward().orCancel.catchError((_) {}),
+      _checkLoginStatus(),
+    ]);
 
-    // ✅ Remove native splash
     FlutterNativeSplash.remove();
 
+    final loggedIn = results[1] as bool;
+
+    if (!mounted) return;
+
+    if (loggedIn) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BlocProvider(
+            create: (context) => sl<SimulationBloc>(),
+            child: const MainHome(),
+          ),
+        ),
+        (route) => false,
+      );
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const RegisterPage()),
+      );
+    }
+  }
+
+  Future<bool> _checkLoginStatus() async {
     try {
-      // ✅ Check if user is logged in
       final token = await localStorageService.getUserToken();
-
-      debugPrint('SplashScreen: Retrieved token: $token');
-
-      if (token != null && token.isNotEmpty) {
-        // ✅ User is logged in - go to main home
-        if (mounted) {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(
-              builder: (context) => BlocProvider(
-                create: (context) => sl<SimulationBloc>(),
-                child: const MainHome(),
-              ),
-            ),
-            (route) => false,
-          );
-        }
-      } else {
-        // ✅ User is not logged in - go to register
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const RegisterPage()),
-          );
-        }
-      }
+      return token != null && token.isNotEmpty;
     } catch (e) {
-      // ✅ Error occurred - go to register
       debugPrint('❌ SplashScreen error: $e');
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const RegisterPage()),
-        );
-      }
+      return false;
     }
   }
 
@@ -131,7 +125,7 @@ class _SplashScreenState extends State<SplashScreen>
                       borderRadius: BorderRadius.circular(40),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
+                          color: Colors.black.withValues(alpha: 0.3),
                           blurRadius: 30,
                           offset: const Offset(0, 15),
                         ),

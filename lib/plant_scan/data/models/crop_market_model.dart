@@ -11,6 +11,7 @@ class CropMarketModel extends CropMarket {
     super.minPrice,
     super.maxPrice,
     super.currency,
+    super.quantity,
     super.unit,
     super.updatedAt,
   });
@@ -24,6 +25,9 @@ class CropMarketModel extends CropMarket {
       minPrice: json['min_price'] ?? 0,
       maxPrice: json['max_price'] ?? 0,
       currency: json['currency'] as String,
+
+      quantity: json["quantity"] as String,
+
       unit: json['unit'] as String,
       updatedAt: json['updatedAt'] == null
           ? null
